@@ -202,39 +202,323 @@ class _GlowingIconState extends State<GlowingIcon>
       );
 }
 
-class StartPage extends StatelessWidget {
+class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.onPrimary,
-              spreadRadius: 8,
-              blurRadius: 30,
-            ),
+  State<StartPage> createState() => _StartPageState();
+}
+
+class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
+  bool showButton = true;
+  double buttonOpacity = 1.0;
+
+  static const simplePattern = <BreathStep>[
+    (breathTo: 1.0, duration: Duration(seconds: 5)), // inhale over 5s
+    (breathTo: 1.0, duration: Duration(seconds: 2)), // hold at top for 2s
+    (breathTo: 0.0, duration: Duration(seconds: 7)), // exhale over 7s
+  ];
+
+  void _handleStartPressed() {
+    setState(() => buttonOpacity = 0.0);
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() => showButton = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Stack(
+          children: [
+            if (!showButton)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40.0),
+                child: BreathGuide(
+                  pattern: simplePattern,
+                  totalRepetitions: 5,
+                ),
+              ),
+            if (showButton)
+              Center(
+                child: AnimatedOpacity(
+                  opacity: buttonOpacity,
+                  duration: const Duration(milliseconds: 500),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          spreadRadius: 8,
+                          blurRadius: 30,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        padding: const EdgeInsets.all(40),
+                        elevation: 10,
+                      ),
+                      onPressed: _handleStartPressed,
+                      child: const Text(
+                        'Start',
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(40),
-            elevation: 10,
-          ),
-          onPressed: () =>
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Start pressed!'),
-          )),
-          child: const Text(
-            'Start',
-            style: TextStyle(fontSize: 24),
-          ),
-        ),
-      ),
+      );
+}
+
+class BreathGuide extends StatefulWidget {
+  final List<BreathStep> pattern;
+  final int totalRepetitions;
+
+  const BreathGuide({
+    super.key,
+    required this.pattern,
+    required this.totalRepetitions,
+  });
+
+  @override
+  State<BreathGuide> createState() => _BreathGuideState();
+}
+
+class _BreathGuideState extends State<BreathGuide>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final List<double> _keyPercentages;
+  late final List<double> _keyTimes; // Normalized time points (0.0 to 1.0)
+  late final double cycleSeconds;
+  late final double totalDurationSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    cycleSeconds = widget.pattern.fold<double>(
+      0.0,
+      (prev, step) => prev + step.duration.inMilliseconds / 1000.0,
+    );
+    totalDurationSeconds = cycleSeconds * widget.totalRepetitions;
+
+    // Pre-calculate key percentages and times for one cycle.
+    List<double> percentages = [];
+    List<double> times = [];
+    double currentTime = 0.0;
+
+    // Start at 0% (center).
+    percentages.add(0.0);
+    times.add(0.0);
+    for (var step in widget.pattern) {
+      currentTime += step.duration.inMilliseconds / 1000.0;
+      percentages.add(step.breathTo);
+      times.add(currentTime);
+    }
+    List<double> normalizedTimes = times.map((t) => t / cycleSeconds).toList();
+
+    _keyPercentages = percentages;
+    _keyTimes = normalizedTimes;
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: (totalDurationSeconds * 1000).round()),
+    )..addListener(() => setState(() {}));
+    _controller.repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double getCurrentBreathPercentage() {
+    double overallProgress = _controller.value;
+    double cycleProgress = (overallProgress * widget.totalRepetitions) % 1.0;
+
+    int index = 0;
+    while (
+        index < _keyTimes.length - 1 && cycleProgress > _keyTimes[index + 1]) {
+      index++;
+    }
+    if (index >= _keyTimes.length - 1) return _keyPercentages.last;
+
+    double t1 = _keyTimes[index];
+    double t2 = _keyTimes[index + 1];
+    double v1 = _keyPercentages[index];
+    double v2 = _keyPercentages[index + 1];
+
+    double localProgress = (cycleProgress - t1) / (t2 - t1);
+
+    localProgress = Curves.easeInOut.transform(localProgress);
+
+    return v1 + (v2 - v1) * localProgress;
+  }
+
+  int getCurrentRepetition() {
+    double overallProgress = _controller.value;
+    return (overallProgress * widget.totalRepetitions).floor() + 1;
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+      builder: (context, constraints) => Stack(
+            children: [
+              // Backdrop showing the full breathing pattern.
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: BreathPatternBackdrop(
+                  context,
+                  keyPercentages: _keyPercentages,
+                  keyTimes: _keyTimes,
+                ),
+              ),
+              // The active animation on top.
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: _BreathPainter(
+                  context,
+                  breathPercent: getCurrentBreathPercentage(),
+                ),
+              ),
+              Center(
+                child: AnimatedSwitcher(
+                  duration: Durations.long1,
+                  transitionBuilder: (
+                    Widget child,
+                    Animation<double> animation,
+                  ) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: FittedBox(
+                    fit: BoxFit.fitWidth,
+                    key: ValueKey<int>(getCurrentRepetition()),
+                    child: Text(
+                      '${getCurrentRepetition()}',
+                      style: TextStyle(
+                        fontSize: 1000,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.1),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ));
+}
+
+class _BreathPainter extends CustomPainter {
+  final double breathPercent;
+  final Paint _paint;
+
+  _BreathPainter(context, {required this.breathPercent})
+      : _paint = Paint()
+          ..color = Theme.of(context).colorScheme.primary
+          ..strokeWidth = 4.0
+          ..strokeCap = StrokeCap.round;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double centerX = size.width / 2;
+    double offset = centerX * breathPercent;
+
+    canvas.drawLine(
+      Offset(centerX - offset, 0),
+      Offset(centerX - offset, size.height),
+      _paint,
+    );
+    canvas.drawLine(
+      Offset(centerX + offset, 0),
+      Offset(centerX + offset, size.height),
+      _paint,
     );
   }
+
+  @override
+  bool shouldRepaint(_BreathPainter oldDelegate) =>
+      oldDelegate.breathPercent != breathPercent;
 }
+
+/// CustomPainter that draws the full, expected breathing pattern as a backdrop.
+class BreathPatternBackdrop extends CustomPainter {
+  final List<double> keyPercentages;
+  final List<double> keyTimes;
+  final double tension;
+  final Paint _paint;
+
+  BreathPatternBackdrop(
+    context, {
+    required this.keyPercentages,
+    required this.keyTimes,
+    this.tension = 0.35,
+  }) : _paint = Paint()
+          ..color = Theme.of(context).colorScheme.onPrimary
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Calculate the center horizontal.
+    double centerX = size.width / 2;
+
+    // Create paths for left and right lines.
+    Path leftPath = _createPath(
+        centerX, size, (centerX, percent) => centerX - centerX * percent);
+    Path rightPath = _createPath(
+        centerX, size, (centerX, percent) => centerX + centerX * percent);
+
+    // Draw the two paths.
+    canvas.drawPath(leftPath, _paint);
+    canvas.drawPath(rightPath, _paint);
+  }
+
+  Path _createPath(
+    double centerX,
+    Size size,
+    double Function(double, double) calculateX,
+  ) {
+    Path path = Path()..moveTo(centerX, 0);
+    // The keyTimes map to vertical positions along the height.
+    for (int i = 0; i < keyPercentages.length - 1; i++) {
+      double percent = keyPercentages[i];
+      double nextPercent = keyPercentages[i + 1];
+      double timeFactor = keyTimes[i];
+      double nextTimeFactor = keyTimes[i + 1];
+
+      double x = calculateX(centerX, percent);
+      double y = size.height * timeFactor;
+      double nextX = calculateX(centerX, nextPercent);
+      double nextY = size.height * nextTimeFactor;
+
+      double controlPoint1X = x;
+      double controlPoint1Y = y + tension * (nextY - y);
+      double controlPoint2X = nextX;
+      double controlPoint2Y = nextY - tension * (nextY - y);
+
+      path.cubicTo(
+        controlPoint1X,
+        controlPoint1Y,
+        controlPoint2X,
+        controlPoint2Y,
+        nextX,
+        nextY,
+      );
+    }
+
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(covariant BreathPatternBackdrop oldDelegate) {
+    return false;
+  }
+}
+
+typedef BreathStep = ({double breathTo, Duration duration});

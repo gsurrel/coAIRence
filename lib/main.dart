@@ -5,13 +5,13 @@ void main() => runApp(const CoAIRenceApp());
 class CoAIRenceApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'coAIRence',
-        theme: ThemeData(
-          colorSchemeSeed: Colors.purple,
-          brightness: Brightness.dark,
-        ),
-        home: const MainScaffold(),
-      );
+    title: 'coAIRence',
+    theme: ThemeData(
+      colorSchemeSeed: Colors.purple,
+      brightness: Brightness.dark,
+    ),
+    home: const MainScaffold(),
+  );
 
   const CoAIRenceApp({super.key});
 }
@@ -28,21 +28,13 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _previousIndex = 2;
 
   Widget _getPageForIndex(int index) => switch (index) {
-        0 => const Center(
-            child: Text('Home Page', style: TextStyle(fontSize: 24)),
-          ),
-        1 => const Center(
-            child: Text('Exercices Page', style: TextStyle(fontSize: 24)),
-          ),
-        2 => const StartPage(),
-        3 => const Center(
-            child: Text('Profile Page', style: TextStyle(fontSize: 24)),
-          ),
-        4 => const Center(
-            child: Text('Settings Page', style: TextStyle(fontSize: 24)),
-          ),
-        _ => const StartPage()
-      };
+    0 => const Center(child: Text('Home', style: TextStyle(fontSize: 24))),
+    1 => const Center(child: Text('Exercices', style: TextStyle(fontSize: 24))),
+    2 => const StartPage(),
+    3 => const Center(child: Text('Profile', style: TextStyle(fontSize: 24))),
+    4 => const Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
+    _ => const StartPage(),
+  };
 
   void _onItemTapped(int targetIndex) {
     if (targetIndex == _currentIndex) return;
@@ -64,10 +56,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         label: label,
       );
     } else {
-      return BottomNavigationBarItem(
-        icon: Icon(icon),
-        label: label,
-      );
+      return BottomNavigationBarItem(icon: Icon(icon), label: label);
     }
   }
 
@@ -89,62 +78,68 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('coAIRence')),
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            final isEntering =
-                (child.key as ValueKey<int>).value == _currentIndex;
-            if (isEntering) {
-              final enterTween = _getEnterTween();
-              return SlideTransition(
-                position: animation.drive(
-                  enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                ),
-                child: child,
-              );
-            } else {
-              final exitTween = _getExitTween();
-              return SlideTransition(
-                position: animation.drive(
-                  exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                ),
-                child: child,
-              );
-            }
-          },
-          child: KeyedSubtree(
-            key: ValueKey<int>(_currentIndex),
-            child: _getPageForIndex(_currentIndex),
-          ),
+    appBar: AppBar(title: const Text('coAIRence')),
+    body: AnimatedSwitcher(
+      duration: Durations.medium1,
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        final isEntering = (child.key as ValueKey<int>).value == _currentIndex;
+        if (isEntering) {
+          final enterTween = _getEnterTween();
+          return SlideTransition(
+            position: animation.drive(
+              enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+            ),
+            child: child,
+          );
+        } else {
+          final exitTween = _getExitTween();
+          return SlideTransition(
+            position: animation.drive(
+              exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+            ),
+            child: child,
+          );
+        }
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(_currentIndex),
+        child: _getPageForIndex(_currentIndex),
+      ),
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      currentIndex: _currentIndex,
+      type: BottomNavigationBarType.fixed,
+      onTap: _onItemTapped,
+      items: [
+        _buildNavItem(context, icon: Icons.home, label: 'Home', index: 0),
+        _buildNavItem(
+          context,
+          icon: Icons.fitness_center,
+          label: 'Exercices',
+          index: 1,
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          onTap: _onItemTapped,
-          items: [
-            _buildNavItem(context, icon: Icons.home, label: 'Home', index: 0),
-            _buildNavItem(context,
-                icon: Icons.fitness_center, label: 'Exercices', index: 1),
-            _buildNavItem(context,
-                icon: Icons.play_circle_fill, label: 'Breathe', index: 2),
-            _buildNavItem(context,
-                icon: Icons.person, label: 'Profile', index: 3),
-            _buildNavItem(context,
-                icon: Icons.settings, label: 'Settings', index: 4),
-          ],
+        _buildNavItem(
+          context,
+          icon: Icons.play_circle_fill,
+          label: 'Breathe',
+          index: 2,
         ),
-      );
+        _buildNavItem(context, icon: Icons.person, label: 'Profile', index: 3),
+        _buildNavItem(
+          context,
+          icon: Icons.settings,
+          label: 'Settings',
+          index: 4,
+        ),
+      ],
+    ),
+  );
 }
 
 class GlowingIcon extends StatefulWidget {
-  const GlowingIcon({
-    super.key,
-    required this.icon,
-    required this.size,
-  });
+  const GlowingIcon({super.key, required this.icon, required this.size});
 
   final IconData icon;
   final double size;
@@ -163,11 +158,12 @@ class _GlowingIconState extends State<GlowingIcon>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: Durations.extralong4,
     );
-    _animation = Tween<double>(begin: 0, end: 20).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: 20,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _controller.repeat(reverse: true);
   }
 
@@ -179,8 +175,9 @@ class _GlowingIconState extends State<GlowingIcon>
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) => Container(
+    animation: _animation,
+    builder:
+        (context, child) => Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
@@ -197,7 +194,7 @@ class _GlowingIconState extends State<GlowingIcon>
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
-      );
+  );
 }
 
 @immutable
@@ -218,60 +215,61 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
   ];
 
   void _handleStartPressed() {
-      setState(() => showButton = false);
+    setState(() => showButton = false);
   }
 
   void _handleExerciseCompleted() => setState(() => showButton = true);
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Stack(
-          children: [
-            Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child: showButton
+    body: Stack(
+      children: [
+        Center(
+          child: AnimatedSwitcher(
+            duration: Durations.medium1,
+            child:
+                showButton
                     ? Center(
-                        key: const ValueKey('startButton'),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                spreadRadius: 8,
-                                blurRadius: 30,
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              shape: const CircleBorder(),
-                              padding: const EdgeInsets.all(40),
-                              elevation: 10,
+                      key: const ValueKey('startButton'),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              spreadRadius: 8,
+                              blurRadius: 30,
                             ),
-                            onPressed: _handleStartPressed,
-                            child: const Padding(
-                              padding: EdgeInsets.all(32.0),
-                              child: Text(
-                                'Breathe',
-                                style: TextStyle(fontSize: 34),
-                              ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: const CircleBorder(),
+                            padding: const EdgeInsets.all(40),
+                            elevation: 10,
+                          ),
+                          onPressed: _handleStartPressed,
+                          child: const Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: Text(
+                              'Breathe',
+                              style: TextStyle(fontSize: 34),
                             ),
                           ),
                         ),
-                      )
-                    : BreathGuide(
-                        pattern: simplePattern,
-                        totalRepetitions: 5,
-                        onExerciseCompleted: _handleExerciseCompleted,
-                        key: const ValueKey('breathingExercise'),
                       ),
-              ),
-            ),
-          ],
+                    )
+                    : BreathGuide(
+                      pattern: simplePattern,
+                      totalRepetitions: 5,
+                      onExerciseCompleted: _handleExerciseCompleted,
+                      key: const ValueKey('breathingExercise'),
+                    ),
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class BreathGuide extends StatefulWidget {
@@ -348,8 +346,8 @@ class _BreathGuideState extends State<BreathGuide>
     double cycleProgress = (overallProgress * widget.totalRepetitions) % 1.0;
 
     int index = 0;
-    while (
-        index < _keyTimes.length - 1 && cycleProgress > _keyTimes[index + 1]) {
+    while (index < _keyTimes.length - 1 &&
+        cycleProgress > _keyTimes[index + 1]) {
       index++;
     }
     if (index >= _keyTimes.length - 1) return _keyPercentages.last;
@@ -371,56 +369,55 @@ class _BreathGuideState extends State<BreathGuide>
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-      builder: (context, constraints) => Stack(
-            children: [
-              // Backdrop showing the full breathing pattern.
-              CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: BreathPatternBackdrop(
-                  context,
-                  keyPercentages: _keyPercentages,
-                  keyTimes: _keyTimes,
-                ),
+    builder:
+        (context, constraints) => Stack(
+          children: [
+            // Backdrop showing the full breathing pattern.
+            CustomPaint(
+              size: Size(constraints.maxWidth, constraints.maxHeight),
+              painter: BreathPatternBackdrop(
+                context,
+                keyPercentages: _keyPercentages,
+                keyTimes: _keyTimes,
               ),
-              // The active animation on top.
-              CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: _BreathPainter(
-                  context,
-                  breathPercent: getCurrentBreathPercentage(),
-                ),
+            ),
+            // The active animation on top.
+            CustomPaint(
+              size: Size(constraints.maxWidth, constraints.maxHeight),
+              painter: _BreathPainter(
+                context,
+                breathPercent: getCurrentBreathPercentage(),
               ),
-              Center(
-                child: AnimatedSwitcher(
-                  duration: Durations.long1,
-                  transitionBuilder: (
-                    Widget child,
-                    Animation<double> animation,
-                  ) =>
-                      FadeTransition(opacity: animation, child: child),
-                  child: FittedBox(
-                    fit: BoxFit.fitWidth,
-                    key: ValueKey<int>(getCurrentRepetition()),
-                    child: Text(
-                      switch (1 +
-                          widget.totalRepetitions -
-                          getCurrentRepetition()) {
-                        0 => '',
-                        final int i => '$i',
-                      },
-                      style: TextStyle(
-                        fontSize: 1000,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.1),
-                      ),
+            ),
+            Center(
+              child: AnimatedSwitcher(
+                duration: Durations.long1,
+                transitionBuilder:
+                    (Widget child, Animation<double> animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                child: FittedBox(
+                  fit: BoxFit.fitWidth,
+                  key: ValueKey<int>(getCurrentRepetition()),
+                  child: Text(
+                    switch (1 +
+                        widget.totalRepetitions -
+                        getCurrentRepetition()) {
+                      0 => '',
+                      final int i => '$i',
+                    },
+                    style: TextStyle(
+                      fontSize: 1000,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
               ),
-            ],
-          ));
+            ),
+          ],
+        ),
+  );
 }
 
 class _BreathPainter extends CustomPainter {
@@ -428,10 +425,11 @@ class _BreathPainter extends CustomPainter {
   final Paint _paint;
 
   _BreathPainter(context, {required this.breathPercent})
-      : _paint = Paint()
-          ..color = Theme.of(context).colorScheme.primary
-          ..strokeWidth = 4.0
-          ..strokeCap = StrokeCap.round;
+    : _paint =
+          Paint()
+            ..color = Theme.of(context).colorScheme.primary
+            ..strokeWidth = 4.0
+            ..strokeCap = StrokeCap.round;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -467,10 +465,11 @@ class BreathPatternBackdrop extends CustomPainter {
     required this.keyPercentages,
     required this.keyTimes,
     this.tension = 0.35,
-  }) : _paint = Paint()
-          ..color = Theme.of(context).colorScheme.onPrimary
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke;
+  }) : _paint =
+           Paint()
+             ..color = Theme.of(context).colorScheme.onPrimary
+             ..strokeWidth = 2.0
+             ..style = PaintingStyle.stroke;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -479,9 +478,15 @@ class BreathPatternBackdrop extends CustomPainter {
 
     // Create paths for left and right lines.
     Path leftPath = _createPath(
-        centerX, size, (centerX, percent) => centerX - centerX * percent);
+      centerX,
+      size,
+      (centerX, percent) => centerX - centerX * percent,
+    );
     Path rightPath = _createPath(
-        centerX, size, (centerX, percent) => centerX + centerX * percent);
+      centerX,
+      size,
+      (centerX, percent) => centerX + centerX * percent,
+    );
 
     // Draw the two paths.
     canvas.drawPath(leftPath, _paint);

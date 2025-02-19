@@ -129,7 +129,7 @@ class _MainScaffoldState extends State<MainScaffold> {
             _buildNavItem(context,
                 icon: Icons.fitness_center, label: 'Exercices', index: 1),
             _buildNavItem(context,
-                icon: Icons.play_circle_fill, label: 'Start', index: 2),
+                icon: Icons.play_circle_fill, label: 'Breathe', index: 2),
             _buildNavItem(context,
                 icon: Icons.person, label: 'Profile', index: 3),
             _buildNavItem(context,

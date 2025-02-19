@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 void main() => runApp(const CoAIRenceApp());
 
 class CoAIRenceApp extends StatelessWidget {
-  const CoAIRenceApp({super.key});
-
   @override
   Widget build(BuildContext context) => MaterialApp(
         title: 'coAIRence',
@@ -14,6 +12,8 @@ class CoAIRenceApp extends StatelessWidget {
         ),
         home: const MainScaffold(),
       );
+
+  const CoAIRenceApp({super.key});
 }
 
 class MainScaffold extends StatefulWidget {
@@ -27,24 +27,22 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _currentIndex = 2;
   int _previousIndex = 2;
 
-  Widget _getPageForIndex(int index) {
-    return switch (index) {
-      0 => const Center(
-          child: Text('Home Page', style: TextStyle(fontSize: 24)),
-        ),
-      1 => const Center(
-          child: Text('Exercices Page', style: TextStyle(fontSize: 24)),
-        ),
-      2 => const StartPage(),
-      3 => const Center(
-          child: Text('Profile Page', style: TextStyle(fontSize: 24)),
-        ),
-      4 => const Center(
-          child: Text('Settings Page', style: TextStyle(fontSize: 24)),
-        ),
-      _ => const StartPage()
-    };
-  }
+  Widget _getPageForIndex(int index) => switch (index) {
+        0 => const Center(
+            child: Text('Home Page', style: TextStyle(fontSize: 24)),
+          ),
+        1 => const Center(
+            child: Text('Exercices Page', style: TextStyle(fontSize: 24)),
+          ),
+        2 => const StartPage(),
+        3 => const Center(
+            child: Text('Profile Page', style: TextStyle(fontSize: 24)),
+          ),
+        4 => const Center(
+            child: Text('Settings Page', style: TextStyle(fontSize: 24)),
+          ),
+        _ => const StartPage()
+      };
 
   void _onItemTapped(int targetIndex) {
     if (targetIndex == _currentIndex) return;
@@ -142,14 +140,14 @@ class _MainScaffoldState extends State<MainScaffold> {
 }
 
 class GlowingIcon extends StatefulWidget {
-  final IconData icon;
-  final double size;
-
   const GlowingIcon({
     super.key,
     required this.icon,
     required this.size,
   });
+
+  final IconData icon;
+  final double size;
 
   @override
   State<GlowingIcon> createState() => _GlowingIconState();
@@ -202,6 +200,7 @@ class _GlowingIconState extends State<GlowingIcon>
       );
 }
 
+@immutable
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
@@ -211,79 +210,81 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
   bool showButton = true;
-  double buttonOpacity = 1.0;
 
   static const simplePattern = <BreathStep>[
     (breathTo: 1.0, duration: Duration(seconds: 5)), // inhale over 5s
-    (breathTo: 1.0, duration: Duration(seconds: 2)), // hold at top for 2s
+    (breathTo: 1.0, duration: Duration(seconds: 2)), // hold for 2s
     (breathTo: 0.0, duration: Duration(seconds: 7)), // exhale over 7s
   ];
 
   void _handleStartPressed() {
-    setState(() => buttonOpacity = 0.0);
-
-    Future.delayed(const Duration(milliseconds: 500), () {
       setState(() => showButton = false);
-    });
   }
+
+  void _handleExerciseCompleted() => setState(() => showButton = true);
 
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Stack(
           children: [
-            if (!showButton)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40.0),
-                child: BreathGuide(
-                  pattern: simplePattern,
-                  totalRepetitions: 5,
-                ),
-              ),
-            if (showButton)
-              Center(
-                child: AnimatedOpacity(
-                  opacity: buttonOpacity,
-                  duration: const Duration(milliseconds: 500),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          spreadRadius: 8,
-                          blurRadius: 30,
+            Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                child: showButton
+                    ? Center(
+                        key: const ValueKey('startButton'),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                spreadRadius: 8,
+                                blurRadius: 30,
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(40),
+                              elevation: 10,
+                            ),
+                            onPressed: _handleStartPressed,
+                            child: const Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: Text(
+                                'Breathe',
+                                style: TextStyle(fontSize: 34),
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(40),
-                        elevation: 10,
+                      )
+                    : BreathGuide(
+                        pattern: simplePattern,
+                        totalRepetitions: 5,
+                        onExerciseCompleted: _handleExerciseCompleted,
+                        key: const ValueKey('breathingExercise'),
                       ),
-                      onPressed: _handleStartPressed,
-                      child: const Text(
-                        'Start',
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    ),
-                  ),
-                ),
               ),
+            ),
           ],
         ),
       );
 }
 
 class BreathGuide extends StatefulWidget {
-  final List<BreathStep> pattern;
-  final int totalRepetitions;
-
   const BreathGuide({
     super.key,
     required this.pattern,
     required this.totalRepetitions,
+    required this.onExerciseCompleted,
   });
+
+  final List<BreathStep> pattern;
+  final int totalRepetitions;
+  final VoidCallback onExerciseCompleted;
 
   @override
   State<BreathGuide> createState() => _BreathGuideState();
@@ -328,7 +329,12 @@ class _BreathGuideState extends State<BreathGuide>
       vsync: this,
       duration: Duration(milliseconds: (totalDurationSeconds * 1000).round()),
     )..addListener(() => setState(() {}));
-    _controller.repeat();
+    _controller.forward().whenComplete(() {
+      if (getCurrentRepetition() >= widget.totalRepetitions) {
+        _controller.stop();
+        widget.onExerciseCompleted();
+      }
+    });
   }
 
   @override
@@ -360,10 +366,8 @@ class _BreathGuideState extends State<BreathGuide>
     return v1 + (v2 - v1) * localProgress;
   }
 
-  int getCurrentRepetition() {
-    double overallProgress = _controller.value;
-    return (overallProgress * widget.totalRepetitions).floor() + 1;
-  }
+  int getCurrentRepetition() =>
+      (_controller.value * widget.totalRepetitions).floor() + 1;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -398,7 +402,12 @@ class _BreathGuideState extends State<BreathGuide>
                     fit: BoxFit.fitWidth,
                     key: ValueKey<int>(getCurrentRepetition()),
                     child: Text(
-                      '${getCurrentRepetition()}',
+                      switch (1 +
+                          widget.totalRepetitions -
+                          getCurrentRepetition()) {
+                        0 => '',
+                        final int i => '$i',
+                      },
                       style: TextStyle(
                         fontSize: 1000,
                         color: Theme.of(context)

@@ -191,40 +191,74 @@ class _ShaderBackdropState extends State<ShaderBackdrop>
   }
 
   @override
-  Widget build(BuildContext context) {
-    final shader = this.shader;
-    return shader == null
-        ? const Center(child: CircularProgressIndicator())
-        : CustomPaint(
-          painter: MyPainter(shader: shader, time: _time),
-          size: MediaQuery.of(context).size,
-        );
-  }
+  Widget build(BuildContext context) => switch (shader) {
+    null => const Center(child: CircularProgressIndicator()),
+    final shader => LayoutBuilder(
+      builder:
+          (context, constraints) => CustomPaint(
+            painter: MyPainter(
+              shader: shader,
+              time: _time,
+              fullSize: Size(constraints.maxWidth, constraints.maxHeight),
+              subsampleFactor: 4096,
+            ),
+            size: Size(constraints.maxWidth, constraints.maxHeight),
+          ),
+    ),
+  };
 }
 
 class MyPainter extends CustomPainter {
-  MyPainter({required this.shader, required this.time});
+  MyPainter({
+    required this.shader,
+    required this.time,
+    required this.fullSize,
+    this.subsampleFactor = 2,
+  });
 
   final FragmentShader shader;
   final double time;
+  final Size fullSize;
+  final int subsampleFactor;
+
+  // Cache a Paint object to avoid recreating it each frame.
+  final Paint _paint = Paint();
 
   @override
   void paint(Canvas canvas, Size size) {
-    shader
-      ..setFloat(0, size.width) // width
-      ..setFloat(1, size.height) // height
-      ..setFloat(2, Colors.purple.r) // red
-      ..setFloat(3, Colors.purple.g) // green
-      ..setFloat(4, Colors.purple.b) // blue
-      ..setFloat(5, 1) // alpha
-      ..setFloat(6, time); // time
+    // Calculate the reduced (virtual) size.
+    final reducedWidth = fullSize.width / subsampleFactor;
+    final reducedHeight = fullSize.height / subsampleFactor;
 
-    final paint = Paint()..shader = shader;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+    // Save the current canvas state.
+    canvas.save();
+
+    // Scale the canvas so that drawing commands are evaluated at the reduced resolution.
+    // This means that drawing a rect sized to "reducedWidth x reducedHeight" will
+    // actually be scaled up to fullSize on the output.
+    canvas.scale(subsampleFactor.toDouble(), subsampleFactor.toDouble());
+
+    // Update shader uniforms with the reduced resolution.
+    shader
+      ..setFloat(0, reducedWidth) // uSize.x
+      ..setFloat(1, reducedHeight) // uSize.y
+      ..setFloat(2, time); // uTime
+
+    // Assign the configured shader to our cached paint object.
+    _paint.shader = shader;
+
+    // Draw a rectangle that covers the reduced virtual size.
+    canvas.drawRect(Rect.fromLTWH(0, 0, reducedWidth, reducedHeight), _paint);
+
+    // Restore the canvas state.
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant MyPainter oldDelegate) {
+    // Repaint every frame because time is constantly changing.
+    return true;
+  }
 }
 
 class GlowingIcon extends StatefulWidget {

@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 void main() => runApp(const CoAIRenceApp());
 
@@ -28,11 +31,17 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _previousIndex = 2;
 
   Widget _getPageForIndex(int index) => switch (index) {
-    0 => const Center(child: Text('Home', style: TextStyle(fontSize: 24))),
-    1 => const Center(child: Text('Exercices', style: TextStyle(fontSize: 24))),
+    0 => const Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    1 => const Center(
+      child: Text('Exercices Page', style: TextStyle(fontSize: 24)),
+    ),
     2 => const StartPage(),
-    3 => const Center(child: Text('Profile', style: TextStyle(fontSize: 24))),
-    4 => const Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
+    3 => const Center(
+      child: Text('Profile Page', style: TextStyle(fontSize: 24)),
+    ),
+    4 => const Center(
+      child: Text('Settings Page', style: TextStyle(fontSize: 24)),
+    ),
     _ => const StartPage(),
   };
 
@@ -79,34 +88,40 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('coAIRence')),
-    body: AnimatedSwitcher(
-      duration: Durations.medium1,
-      switchInCurve: Curves.easeInOut,
-      switchOutCurve: Curves.easeInOut,
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        final isEntering = (child.key as ValueKey<int>).value == _currentIndex;
-        if (isEntering) {
-          final enterTween = _getEnterTween();
-          return SlideTransition(
-            position: animation.drive(
-              enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-            ),
-            child: child,
-          );
-        } else {
-          final exitTween = _getExitTween();
-          return SlideTransition(
-            position: animation.drive(
-              exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-            ),
-            child: child,
-          );
-        }
-      },
-      child: KeyedSubtree(
-        key: ValueKey<int>(_currentIndex),
-        child: _getPageForIndex(_currentIndex),
-      ),
+    body: Stack(
+      children: [
+        const ShaderBackdrop(),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          switchInCurve: Curves.easeInOut,
+          switchOutCurve: Curves.easeInOut,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            final isEntering =
+                (child.key as ValueKey<int>).value == _currentIndex;
+            if (isEntering) {
+              final enterTween = _getEnterTween();
+              return SlideTransition(
+                position: animation.drive(
+                  enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                ),
+                child: child,
+              );
+            } else {
+              final exitTween = _getExitTween();
+              return SlideTransition(
+                position: animation.drive(
+                  exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                ),
+                child: child,
+              );
+            }
+          },
+          child: KeyedSubtree(
+            key: ValueKey<int>(_currentIndex),
+            child: _getPageForIndex(_currentIndex),
+          ),
+        ),
+      ],
     ),
     bottomNavigationBar: BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -123,7 +138,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         _buildNavItem(
           context,
           icon: Icons.play_circle_fill,
-          label: 'Breathe',
+          label: 'Start',
           index: 2,
         ),
         _buildNavItem(context, icon: Icons.person, label: 'Profile', index: 3),
@@ -136,6 +151,80 @@ class _MainScaffoldState extends State<MainScaffold> {
       ],
     ),
   );
+}
+
+class ShaderBackdrop extends StatefulWidget {
+  const ShaderBackdrop({super.key});
+
+  @override
+  State<ShaderBackdrop> createState() => _ShaderBackdropState();
+}
+
+class _ShaderBackdropState extends State<ShaderBackdrop>
+    with SingleTickerProviderStateMixin {
+  FragmentShader? shader;
+  late Ticker _ticker;
+  double _time = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyShader();
+    _ticker = createTicker((elapsed) {
+      setState(() => _time = elapsed.inMilliseconds / 1000.0);
+    });
+    _ticker.start();
+  }
+
+  Future<void> _loadMyShader() async {
+    const path = 'lib/particle_shader.frag';
+    final program = await FragmentProgram.fromAsset(path);
+    setState(() {
+      shader = program.fragmentShader();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shader = this.shader;
+    return shader == null
+        ? const Center(child: CircularProgressIndicator())
+        : CustomPaint(
+          painter: MyPainter(shader: shader, time: _time),
+          size: MediaQuery.of(context).size,
+        );
+  }
+}
+
+class MyPainter extends CustomPainter {
+  MyPainter({required this.shader, required this.time});
+
+  final FragmentShader shader;
+  final double time;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    shader
+      ..setFloat(0, size.width) // width
+      ..setFloat(1, size.height) // height
+      ..setFloat(2, Colors.purple.r) // red
+      ..setFloat(3, Colors.purple.g) // green
+      ..setFloat(4, Colors.purple.b) // blue
+      ..setFloat(5, 1) // alpha
+      ..setFloat(6, time); // time
+
+    final paint = Paint()..shader = shader;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class GlowingIcon extends StatefulWidget {
@@ -158,7 +247,7 @@ class _GlowingIconState extends State<GlowingIcon>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Durations.extralong4,
+      duration: const Duration(seconds: 3),
     );
     _animation = Tween<double>(
       begin: 0,
@@ -222,11 +311,12 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.transparent,
     body: Stack(
       children: [
         Center(
           child: AnimatedSwitcher(
-            duration: Durations.medium1,
+            duration: const Duration(milliseconds: 500),
             child:
                 showButton
                     ? Center(
@@ -409,7 +499,7 @@ class _BreathGuideState extends State<BreathGuide>
                       fontSize: 1000,
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.1),
+                      ).colorScheme.primary.withOpacity(0.1),
                     ),
                   ),
                 ),
@@ -464,7 +554,7 @@ class BreathPatternBackdrop extends CustomPainter {
     context, {
     required this.keyPercentages,
     required this.keyTimes,
-    this.tension = 0.35,
+    this.tension = 0.42,
   }) : _paint =
            Paint()
              ..color = Theme.of(context).colorScheme.onPrimary

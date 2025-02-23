@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 void main() => runApp(const CoAIRenceApp());
 
 class CoAIRenceApp extends StatelessWidget {
-
   const CoAIRenceApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -95,8 +94,10 @@ class _MainScaffoldState extends State<MainScaffold> {
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
-            final isEntering =
-                (child.key! as ValueKey<int>).value == _currentIndex;
+            final isEntering = switch (child.key) {
+              ValueKey<int>(:final int value) => value == _currentIndex,
+              _ => false,
+            };
             if (isEntering) {
               final enterTween = _getEnterTween();
               return SlideTransition(
@@ -183,7 +184,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
     final shader => LayoutBuilder(
       builder:
           (context, constraints) => CustomPaint(
-            painter: MyPainter(
+            painter: ShaderPainter(
               shader: shader,
               fullSize: Size(constraints.maxWidth, constraints.maxHeight),
             ),
@@ -193,29 +194,26 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   };
 }
 
-class MyPainter extends CustomPainter {
-  MyPainter({
+class ShaderPainter extends CustomPainter {
+  ShaderPainter({
     required this.shader,
     required this.fullSize,
-  }) {
-    _paint.shader =
-        shader
+  }) : _paint = Paint()..shader = (shader
           ..setFloat(0, fullSize.width)
-          ..setFloat(1, fullSize.height);
-  }
-
+          ..setFloat(1, fullSize.height));
+    
   final FragmentShader shader;
   final Size fullSize;
-  final Paint _paint = Paint();
-
+  final Paint _paint;
+  
   @override
   void paint(Canvas canvas, Size size) => canvas.drawRect(
       Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
       _paint,
     );
-
+  
   @override
-  bool shouldRepaint(covariant MyPainter oldDelegate) => false;
+  bool shouldRepaint(covariant ShaderPainter oldDelegate) => false;
 }
 
 class GlowingIcon extends StatefulWidget {
@@ -502,7 +500,6 @@ class _BreathGuideState extends State<BreathGuide>
 }
 
 class _BreathPainter extends CustomPainter {
-
   _BreathPainter(BuildContext context, {required this.breathPercent})
     : _paint =
           Paint()
@@ -517,16 +514,17 @@ class _BreathPainter extends CustomPainter {
     final centerX = size.width / 2;
     final offset = centerX * breathPercent;
 
-    canvas..drawLine(
-      Offset(centerX - offset, 0),
-      Offset(centerX - offset, size.height),
-      _paint,
-    )
-    ..drawLine(
-      Offset(centerX + offset, 0),
-      Offset(centerX + offset, size.height),
-      _paint,
-    );
+    canvas
+      ..drawLine(
+        Offset(centerX - offset, 0),
+        Offset(centerX - offset, size.height),
+        _paint,
+      )
+      ..drawLine(
+        Offset(centerX + offset, 0),
+        Offset(centerX + offset, size.height),
+        _paint,
+      );
   }
 
   @override
@@ -536,7 +534,6 @@ class _BreathPainter extends CustomPainter {
 
 /// CustomPainter that draws the full, expected breathing pattern as a backdrop.
 class BreathPatternBackdrop extends CustomPainter {
-
   BreathPatternBackdrop(
     BuildContext context, {
     required this.keyPercentages,

@@ -16,13 +16,16 @@ void main() {
     float T = t + 0.1 * p.x;
 
     vec4 O = vec4(0.0);
+    vec4 baseColor = vec4(0.5, 0.0, 0.5, 1.0);
+    vec4 colorMod = vec4(1.0, 2.0, 3.0, 0.0);
+
     for (int i = 0; i < 45; i++) {
         float iFloat = float(i);
         
-    vec4 color = vec4(0.5, 0.0, 0.5, 1.0)
-        * (cos(sin(iFloat) * vec4(1.0, 2.0, 3.0, 0.0)) + 1.0)
-        * exp(sin(iFloat + 0.1 * iFloat * T))
-        / length(max(p, p / vec2(3.0, 8.0)));
+        vec4 color = baseColor
+            * (cos(sin(iFloat) * colorMod) + 1.0)
+            * exp(sin(iFloat + 0.1 * iFloat * T))
+            / length(max(p, p / vec2(3.0, 8.0)));
                 
         O += color;
         p += 2.0 * cos(iFloat * vec2(11.0, 9.0) + iFloat * iFloat + T * 0.2);

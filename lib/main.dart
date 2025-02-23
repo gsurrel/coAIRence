@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -51,22 +52,6 @@ class _MainScaffoldState extends State<MainScaffold> {
     });
   }
 
-  BottomNavigationBarItem _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    if (index == 2) {
-      return BottomNavigationBarItem(
-        icon: GlowingIcon(icon: icon, size: 28),
-        label: label,
-      );
-    } else {
-      return BottomNavigationBarItem(icon: Icon(icon), label: label);
-    }
-  }
-
   Tween<Offset> _getEnterTween() {
     if (_currentIndex > _previousIndex) {
       return Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
@@ -85,7 +70,35 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('coAIRence')),
+    appBar: AppBar(
+      title: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: 'co',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(
+              text: 'AIR',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextSpan(
+              text: 'ence',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
     body: Stack(
       children: [
         const ShaderBackdrop(),
@@ -127,27 +140,18 @@ class _MainScaffoldState extends State<MainScaffold> {
       currentIndex: _currentIndex,
       type: BottomNavigationBarType.fixed,
       onTap: _onItemTapped,
-      items: [
-        _buildNavItem(context, icon: Icons.home, label: 'Home', index: 0),
-        _buildNavItem(
-          context,
-          icon: Icons.fitness_center,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.fitness_center),
           label: 'Exercises',
-          index: 1,
         ),
-        _buildNavItem(
-          context,
-          icon: Icons.play_circle_fill,
+        BottomNavigationBarItem(
+          icon: Icon(Icons.play_circle_fill),
           label: 'Breathe',
-          index: 2,
         ),
-        _buildNavItem(context, icon: Icons.person, label: 'Profile', index: 3),
-        _buildNavItem(
-          context,
-          icon: Icons.settings,
-          label: 'Settings',
-          index: 4,
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
     ),
   );
@@ -195,24 +199,25 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
 }
 
 class ShaderPainter extends CustomPainter {
-  ShaderPainter({
-    required this.shader,
-    required this.fullSize,
-  }) : _paint = Paint()..shader = (shader
-          ..setFloat(0, fullSize.width)
-          ..setFloat(1, fullSize.height)
-          ..setFloat(2, 60));
-    
+  ShaderPainter({required this.shader, required this.fullSize})
+    : _paint =
+          Paint()
+            ..shader =
+                (shader
+                  ..setFloat(0, fullSize.width)
+                  ..setFloat(1, fullSize.height)
+                  ..setFloat(2, 60));
+
   final FragmentShader shader;
   final Size fullSize;
   final Paint _paint;
-  
+
   @override
   void paint(Canvas canvas, Size size) => canvas.drawRect(
-      Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
-      _paint,
-    );
-  
+    Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
+    _paint,
+  );
+
   @override
   bool shouldRepaint(covariant ShaderPainter oldDelegate) => false;
 }
@@ -293,61 +298,44 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
     (breathTo: 0.0, duration: Duration(seconds: 7)), // exhale over 7s
   ];
 
-  void _handleStartPressed() {
-    setState(() => showButton = false);
-  }
-
-  void _handleExerciseCompleted() => setState(() => showButton = true);
-
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: Colors.transparent,
-    body: Stack(
-      children: [
-        Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child:
-                showButton
-                    ? Center(
-                      key: const ValueKey('startButton'),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              spreadRadius: 8,
-                              blurRadius: 30,
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: const CircleBorder(),
-                            padding: const EdgeInsets.all(40),
-                            elevation: 10,
-                          ),
-                          onPressed: _handleStartPressed,
-                          child: const Padding(
-                            padding: EdgeInsets.all(32),
-                            child: Text(
-                              'Breathe',
-                              style: TextStyle(fontSize: 34),
-                            ),
-                          ),
-                        ),
+    body: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 48),
+      child: Stack(
+        children: [
+          Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: switch (showButton) {
+                true => Center(
+                  key: const ValueKey('startButton'),
+                  child: FittedBox(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        padding: const EdgeInsets.all(30),
                       ),
-                    )
-                    : BreathGuide(
-                      pattern: simplePattern,
-                      totalRepetitions: 5,
-                      onExerciseCompleted: _handleExerciseCompleted,
-                      key: const ValueKey('breathingExercise'),
+                      onPressed: () => setState(() => showButton = false),
+                      child: const Padding(
+                        padding: EdgeInsets.all(30),
+                        child: Text('Breathe', style: TextStyle(fontSize: 34)),
+                      ),
                     ),
+                  ),
+                ),
+                false => BreathGuide(
+                  pattern: simplePattern,
+                  totalRepetitions: 5,
+                  onExerciseCompleted: () => setState(() => showButton = true),
+                  key: const ValueKey('breathingExercise'),
+                ),
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
@@ -373,17 +361,17 @@ class _BreathGuideState extends State<BreathGuide>
   late final AnimationController _controller;
   late final List<double> _keyPercentages;
   late final List<double> _keyTimes; // Normalized time points (0.0 to 1.0)
-  late final double cycleSeconds;
-  late final double totalDurationSeconds;
+  late final Duration cycleDuration;
+  late final Duration totalDuration;
 
   @override
   void initState() {
     super.initState();
-    cycleSeconds = widget.pattern.fold<double>(
-      0,
-      (prev, step) => prev + step.duration.inMilliseconds / 1000.0,
+    cycleDuration = widget.pattern.fold<Duration>(
+      Duration.zero,
+      (prev, step) => prev + step.duration,
     );
-    totalDurationSeconds = cycleSeconds * widget.totalRepetitions;
+    totalDuration = cycleDuration * widget.totalRepetitions;
 
     // Pre-calculate key percentages and times for one cycle.
     final percentages = <double>[];
@@ -398,15 +386,14 @@ class _BreathGuideState extends State<BreathGuide>
       percentages.add(step.breathTo);
       times.add(currentTime);
     }
-    final normalizedTimes = times.map((t) => t / cycleSeconds).toList();
+    final normalizedTimes =
+        times.map((t) => t / cycleDuration.inSeconds).toList();
 
     _keyPercentages = percentages;
     _keyTimes = normalizedTimes;
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: (totalDurationSeconds * 1000).round()),
-    )..addListener(() => setState(() {}));
+    _controller = AnimationController(vsync: this, duration: totalDuration)
+      ..addListener(() => setState(() {}));
     _controller.forward().whenComplete(() {
       if (getCurrentRepetition() >= widget.totalRepetitions) {
         _controller.stop();
@@ -421,13 +408,13 @@ class _BreathGuideState extends State<BreathGuide>
     super.dispose();
   }
 
-  double getCurrentBreathPercentage() {
-    final overallProgress = _controller.value;
-    final cycleProgress = (overallProgress * widget.totalRepetitions) % 1.0;
+  double getCycleProgress() =>
+      (_controller.value * widget.totalRepetitions) % 1.0;
 
+  double getCurrentBreathPercentage() {
     var index = 0;
     while (index < _keyTimes.length - 1 &&
-        cycleProgress > _keyTimes[index + 1]) {
+        getCycleProgress() > _keyTimes[index + 1]) {
       index++;
     }
     if (index >= _keyTimes.length - 1) return _keyPercentages.last;
@@ -437,7 +424,7 @@ class _BreathGuideState extends State<BreathGuide>
     final v1 = _keyPercentages[index];
     final v2 = _keyPercentages[index + 1];
 
-    var localProgress = (cycleProgress - t1) / (t2 - t1);
+    var localProgress = (getCycleProgress() - t1) / (t2 - t1);
 
     localProgress = Curves.easeInOut.transform(localProgress);
 
@@ -466,6 +453,7 @@ class _BreathGuideState extends State<BreathGuide>
               size: Size(constraints.maxWidth, constraints.maxHeight),
               painter: _BreathPainter(
                 context,
+                cycleProgress: getCycleProgress(),
                 breathPercent: getCurrentBreathPercentage(),
               ),
             ),
@@ -489,7 +477,7 @@ class _BreathGuideState extends State<BreathGuide>
                       fontSize: 1000,
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.15),
+                      ).colorScheme.primary.withValues(alpha: 0.2),
                     ),
                   ),
                 ),
@@ -501,31 +489,54 @@ class _BreathGuideState extends State<BreathGuide>
 }
 
 class _BreathPainter extends CustomPainter {
-  _BreathPainter(BuildContext context, {required this.breathPercent})
-    : _paint =
-          Paint()
-            ..color = Theme.of(context).colorScheme.primary
-            ..strokeWidth = 4.0
-            ..strokeCap = StrokeCap.round;
+  _BreathPainter(
+    BuildContext context, {
+    required this.cycleProgress,
+    required this.breathPercent,
+  }) : _paintFill =
+           Paint()
+             ..color = Theme.of(context).colorScheme.primary.withAlpha(150),
+       _paintBorder =
+           Paint()
+             ..color = Theme.of(context).colorScheme.primary
+             ..strokeWidth = 2.0
+             ..strokeCap = StrokeCap.round
+             ..style = PaintingStyle.stroke;
+
   final double breathPercent;
-  final Paint _paint;
+  final double cycleProgress;
+  final Paint _paintFill;
+  final Paint _paintBorder;
 
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
     final offset = centerX * breathPercent;
+    final height = cycleProgress * size.height;
+    final lipSize = sqrt(offset*4);
 
-    canvas
-      ..drawLine(
-        Offset(centerX - offset, 0),
-        Offset(centerX - offset, size.height),
-        _paint,
-      )
-      ..drawLine(
-        Offset(centerX + offset, 0),
-        Offset(centerX + offset, size.height),
-        _paint,
-      );
+    // Draw the path on the canvas
+    final path =
+        Path()
+          // Move to the starting point of the left bracket
+          ..moveTo(centerX - offset, height)
+          // Draw the top lip
+          ..quadraticBezierTo(
+            centerX,
+            height - lipSize,
+            centerX + offset,
+            height,
+          )
+          // Draw the bottom lip
+          ..quadraticBezierTo(
+            centerX,
+            height + lipSize,
+            centerX - offset,
+            height,
+          )
+          ..close();
+
+    canvas..drawPath(path, _paintFill)..drawPath(path, _paintBorder);
   }
 
   @override
@@ -568,8 +579,9 @@ class BreathPatternBackdrop extends CustomPainter {
     );
 
     // Draw the two paths.
-    canvas.drawPath(leftPath, _paint);
-    canvas.drawPath(rightPath, _paint);
+    canvas
+      ..drawPath(leftPath, _paint)
+      ..drawPath(rightPath, _paint);
   }
 
   Path _createPath(

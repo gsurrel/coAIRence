@@ -1,11 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 void main() => runApp(const CoAIRenceApp());
 
 class CoAIRenceApp extends StatelessWidget {
+
+  const CoAIRenceApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'coAIRence',
@@ -15,8 +16,6 @@ class CoAIRenceApp extends StatelessWidget {
     ),
     home: const MainScaffold(),
   );
-
-  const CoAIRenceApp({super.key});
 }
 
 class MainScaffold extends StatefulWidget {
@@ -97,7 +96,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
             final isEntering =
-                (child.key as ValueKey<int>).value == _currentIndex;
+                (child.key! as ValueKey<int>).value == _currentIndex;
             if (isEntering) {
               final enterTween = _getEnterTween();
               return SlideTransition(
@@ -138,7 +137,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         _buildNavItem(
           context,
           icon: Icons.play_circle_fill,
-          label: 'Start',
+          label: 'Breathe',
           index: 2,
         ),
         _buildNavItem(context, icon: Icons.person, label: 'Profile', index: 3),
@@ -160,35 +159,23 @@ class ShaderBackdrop extends StatefulWidget {
   State<ShaderBackdrop> createState() => _ShaderBackdropState();
 }
 
-class _ShaderBackdropState extends State<ShaderBackdrop>
-    with SingleTickerProviderStateMixin {
+class _ShaderBackdropState extends State<ShaderBackdrop> {
   FragmentShader? shader;
-  late Ticker _ticker;
-  double _time = 0.0;
 
   @override
   void initState() {
     super.initState();
     _loadMyShader();
-    _ticker = createTicker((elapsed) {
-      setState(() => _time = elapsed.inMilliseconds / 1000.0);
-    });
-    _ticker.start();
   }
 
   Future<void> _loadMyShader() async {
     const path = 'lib/particle_shader.frag';
     final program = await FragmentProgram.fromAsset(path);
-    setState(() {
-      shader = program.fragmentShader();
-    });
+    setState(() => shader = program.fragmentShader());
   }
 
   @override
-  void dispose() {
-    _ticker.dispose();
-    super.dispose();
-  }
+  void dispose() => super.dispose();
 
   @override
   Widget build(BuildContext context) => switch (shader) {
@@ -198,9 +185,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop>
           (context, constraints) => CustomPaint(
             painter: MyPainter(
               shader: shader,
-              time: _time,
               fullSize: Size(constraints.maxWidth, constraints.maxHeight),
-              subsampleFactor: 4096,
             ),
             size: Size(constraints.maxWidth, constraints.maxHeight),
           ),
@@ -211,58 +196,30 @@ class _ShaderBackdropState extends State<ShaderBackdrop>
 class MyPainter extends CustomPainter {
   MyPainter({
     required this.shader,
-    required this.time,
     required this.fullSize,
-    this.subsampleFactor = 2,
-  });
+  }) {
+    _paint.shader =
+        shader
+          ..setFloat(0, fullSize.width)
+          ..setFloat(1, fullSize.height);
+  }
 
   final FragmentShader shader;
-  final double time;
   final Size fullSize;
-  final int subsampleFactor;
-
-  // Cache a Paint object to avoid recreating it each frame.
   final Paint _paint = Paint();
 
   @override
-  void paint(Canvas canvas, Size size) {
-    // Calculate the reduced (virtual) size.
-    final reducedWidth = fullSize.width / subsampleFactor;
-    final reducedHeight = fullSize.height / subsampleFactor;
-
-    // Save the current canvas state.
-    canvas.save();
-
-    // Scale the canvas so that drawing commands are evaluated at the reduced resolution.
-    // This means that drawing a rect sized to "reducedWidth x reducedHeight" will
-    // actually be scaled up to fullSize on the output.
-    canvas.scale(subsampleFactor.toDouble(), subsampleFactor.toDouble());
-
-    // Update shader uniforms with the reduced resolution.
-    shader
-      ..setFloat(0, reducedWidth) // uSize.x
-      ..setFloat(1, reducedHeight) // uSize.y
-      ..setFloat(2, time); // uTime
-
-    // Assign the configured shader to our cached paint object.
-    _paint.shader = shader;
-
-    // Draw a rectangle that covers the reduced virtual size.
-    canvas.drawRect(Rect.fromLTWH(0, 0, reducedWidth, reducedHeight), _paint);
-
-    // Restore the canvas state.
-    canvas.restore();
-  }
+  void paint(Canvas canvas, Size size) => canvas.drawRect(
+      Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
+      _paint,
+    );
 
   @override
-  bool shouldRepaint(covariant MyPainter oldDelegate) {
-    // Repaint every frame because time is constantly changing.
-    return true;
-  }
+  bool shouldRepaint(covariant MyPainter oldDelegate) => false;
 }
 
 class GlowingIcon extends StatefulWidget {
-  const GlowingIcon({super.key, required this.icon, required this.size});
+  const GlowingIcon({required this.icon, required this.size, super.key});
 
   final IconData icon;
   final double size;
@@ -374,7 +331,7 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
                           ),
                           onPressed: _handleStartPressed,
                           child: const Padding(
-                            padding: EdgeInsets.all(32.0),
+                            padding: EdgeInsets.all(32),
                             child: Text(
                               'Breathe',
                               style: TextStyle(fontSize: 34),
@@ -398,10 +355,10 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
 
 class BreathGuide extends StatefulWidget {
   const BreathGuide({
-    super.key,
     required this.pattern,
     required this.totalRepetitions,
     required this.onExerciseCompleted,
+    super.key,
   });
 
   final List<BreathStep> pattern;
@@ -424,25 +381,25 @@ class _BreathGuideState extends State<BreathGuide>
   void initState() {
     super.initState();
     cycleSeconds = widget.pattern.fold<double>(
-      0.0,
+      0,
       (prev, step) => prev + step.duration.inMilliseconds / 1000.0,
     );
     totalDurationSeconds = cycleSeconds * widget.totalRepetitions;
 
     // Pre-calculate key percentages and times for one cycle.
-    List<double> percentages = [];
-    List<double> times = [];
-    double currentTime = 0.0;
+    final percentages = <double>[];
+    final times = <double>[];
+    double currentTime = 0;
 
     // Start at 0% (center).
-    percentages.add(0.0);
-    times.add(0.0);
-    for (var step in widget.pattern) {
+    percentages.add(0);
+    times.add(0);
+    for (final step in widget.pattern) {
       currentTime += step.duration.inMilliseconds / 1000.0;
       percentages.add(step.breathTo);
       times.add(currentTime);
     }
-    List<double> normalizedTimes = times.map((t) => t / cycleSeconds).toList();
+    final normalizedTimes = times.map((t) => t / cycleSeconds).toList();
 
     _keyPercentages = percentages;
     _keyTimes = normalizedTimes;
@@ -466,22 +423,22 @@ class _BreathGuideState extends State<BreathGuide>
   }
 
   double getCurrentBreathPercentage() {
-    double overallProgress = _controller.value;
-    double cycleProgress = (overallProgress * widget.totalRepetitions) % 1.0;
+    final overallProgress = _controller.value;
+    final cycleProgress = (overallProgress * widget.totalRepetitions) % 1.0;
 
-    int index = 0;
+    var index = 0;
     while (index < _keyTimes.length - 1 &&
         cycleProgress > _keyTimes[index + 1]) {
       index++;
     }
     if (index >= _keyTimes.length - 1) return _keyPercentages.last;
 
-    double t1 = _keyTimes[index];
-    double t2 = _keyTimes[index + 1];
-    double v1 = _keyPercentages[index];
-    double v2 = _keyPercentages[index + 1];
+    final t1 = _keyTimes[index];
+    final t2 = _keyTimes[index + 1];
+    final v1 = _keyPercentages[index];
+    final v2 = _keyPercentages[index + 1];
 
-    double localProgress = (cycleProgress - t1) / (t2 - t1);
+    var localProgress = (cycleProgress - t1) / (t2 - t1);
 
     localProgress = Curves.easeInOut.transform(localProgress);
 
@@ -533,7 +490,7 @@ class _BreathGuideState extends State<BreathGuide>
                       fontSize: 1000,
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.1),
+                      ).colorScheme.primary.withValues(alpha: 0.15),
                     ),
                   ),
                 ),
@@ -545,27 +502,27 @@ class _BreathGuideState extends State<BreathGuide>
 }
 
 class _BreathPainter extends CustomPainter {
-  final double breathPercent;
-  final Paint _paint;
 
-  _BreathPainter(context, {required this.breathPercent})
+  _BreathPainter(BuildContext context, {required this.breathPercent})
     : _paint =
           Paint()
             ..color = Theme.of(context).colorScheme.primary
             ..strokeWidth = 4.0
             ..strokeCap = StrokeCap.round;
+  final double breathPercent;
+  final Paint _paint;
 
   @override
   void paint(Canvas canvas, Size size) {
-    double centerX = size.width / 2;
-    double offset = centerX * breathPercent;
+    final centerX = size.width / 2;
+    final offset = centerX * breathPercent;
 
-    canvas.drawLine(
+    canvas..drawLine(
       Offset(centerX - offset, 0),
       Offset(centerX - offset, size.height),
       _paint,
-    );
-    canvas.drawLine(
+    )
+    ..drawLine(
       Offset(centerX + offset, 0),
       Offset(centerX + offset, size.height),
       _paint,
@@ -579,13 +536,9 @@ class _BreathPainter extends CustomPainter {
 
 /// CustomPainter that draws the full, expected breathing pattern as a backdrop.
 class BreathPatternBackdrop extends CustomPainter {
-  final List<double> keyPercentages;
-  final List<double> keyTimes;
-  final double tension;
-  final Paint _paint;
 
   BreathPatternBackdrop(
-    context, {
+    BuildContext context, {
     required this.keyPercentages,
     required this.keyTimes,
     this.tension = 0.42,
@@ -594,19 +547,23 @@ class BreathPatternBackdrop extends CustomPainter {
              ..color = Theme.of(context).colorScheme.onPrimary
              ..strokeWidth = 2.0
              ..style = PaintingStyle.stroke;
+  final List<double> keyPercentages;
+  final List<double> keyTimes;
+  final double tension;
+  final Paint _paint;
 
   @override
   void paint(Canvas canvas, Size size) {
     // Calculate the center horizontal.
-    double centerX = size.width / 2;
+    final centerX = size.width / 2;
 
     // Create paths for left and right lines.
-    Path leftPath = _createPath(
+    final leftPath = _createPath(
       centerX,
       size,
       (centerX, percent) => centerX - centerX * percent,
     );
-    Path rightPath = _createPath(
+    final rightPath = _createPath(
       centerX,
       size,
       (centerX, percent) => centerX + centerX * percent,
@@ -622,23 +579,23 @@ class BreathPatternBackdrop extends CustomPainter {
     Size size,
     double Function(double, double) calculateX,
   ) {
-    Path path = Path()..moveTo(centerX, 0);
+    final path = Path()..moveTo(centerX, 0);
     // The keyTimes map to vertical positions along the height.
-    for (int i = 0; i < keyPercentages.length - 1; i++) {
-      double percent = keyPercentages[i];
-      double nextPercent = keyPercentages[i + 1];
-      double timeFactor = keyTimes[i];
-      double nextTimeFactor = keyTimes[i + 1];
+    for (var i = 0; i < keyPercentages.length - 1; i++) {
+      final percent = keyPercentages[i];
+      final nextPercent = keyPercentages[i + 1];
+      final timeFactor = keyTimes[i];
+      final nextTimeFactor = keyTimes[i + 1];
 
-      double x = calculateX(centerX, percent);
-      double y = size.height * timeFactor;
-      double nextX = calculateX(centerX, nextPercent);
-      double nextY = size.height * nextTimeFactor;
+      final x = calculateX(centerX, percent);
+      final y = size.height * timeFactor;
+      final nextX = calculateX(centerX, nextPercent);
+      final nextY = size.height * nextTimeFactor;
 
-      double controlPoint1X = x;
-      double controlPoint1Y = y + tension * (nextY - y);
-      double controlPoint2X = nextX;
-      double controlPoint2Y = nextY - tension * (nextY - y);
+      final controlPoint1X = x;
+      final controlPoint1Y = y + tension * (nextY - y);
+      final controlPoint2X = nextX;
+      final controlPoint2Y = nextY - tension * (nextY - y);
 
       path.cubicTo(
         controlPoint1X,

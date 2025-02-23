@@ -6,13 +6,14 @@
 #include <flutter/runtime_effect.glsl>
 
 uniform vec2 uSize;
+uniform float uTime;
 
 out vec4 fragColor;
 
 void main() {
     vec2 r = uSize;
     vec2 p = (FlutterFragCoord().xy * 2 - r) / r.y * mat2(4, -3, 3, 4);
-    float t = 60;
+    float t = uTime;
     float T = t + 0.1 * p.x;
 
     vec4 O = vec4(0.0);

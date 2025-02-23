@@ -31,7 +31,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget _getPageForIndex(int index) => switch (index) {
     0 => const Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
     1 => const Center(
-      child: Text('Exercices Page', style: TextStyle(fontSize: 24)),
+      child: Text('Exercises Page', style: TextStyle(fontSize: 24)),
     ),
     2 => const StartPage(),
     3 => const Center(
@@ -132,7 +132,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         _buildNavItem(
           context,
           icon: Icons.fitness_center,
-          label: 'Exercices',
+          label: 'Exercises',
           index: 1,
         ),
         _buildNavItem(
@@ -200,7 +200,8 @@ class ShaderPainter extends CustomPainter {
     required this.fullSize,
   }) : _paint = Paint()..shader = (shader
           ..setFloat(0, fullSize.width)
-          ..setFloat(1, fullSize.height));
+          ..setFloat(1, fullSize.height)
+          ..setFloat(2, 60));
     
   final FragmentShader shader;
   final Size fullSize;

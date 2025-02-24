@@ -147,7 +147,10 @@ class _MainScaffoldState extends State<MainScaffold>
                   );
                 }
               },
-              child: PageLoader(currentIndex: _currentIndex),
+              child: PageLoader(
+                key: ValueKey<int>(_currentIndex),
+                currentIndex: _currentIndex,
+              ),
             ),
           ),
         ],
@@ -181,28 +184,19 @@ class PageLoader extends StatelessWidget {
   const PageLoader({required int currentIndex, super.key})
     : _currentIndex = currentIndex;
 
+  static const _pages = [
+    Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    Center(child: Text('Exercises Page', style: TextStyle(fontSize: 24))),
+    StartPage(),
+    Center(child: Text('Profile Page', style: TextStyle(fontSize: 24))),
+    Center(child: Text('Settings Page', style: TextStyle(fontSize: 24))),
+  ];
+
   final int _currentIndex;
 
   @override
-  Widget build(BuildContext context) => KeyedSubtree(
-    key: ValueKey<int>(_currentIndex),
-    child: switch (_currentIndex) {
-      0 => const Center(
-        child: Text('Home Page', style: TextStyle(fontSize: 24)),
-      ),
-      1 => const Center(
-        child: Text('Exercises Page', style: TextStyle(fontSize: 24)),
-      ),
-      2 => const StartPage(),
-      3 => const Center(
-        child: Text('Profile Page', style: TextStyle(fontSize: 24)),
-      ),
-      4 => const Center(
-        child: Text('Settings Page', style: TextStyle(fontSize: 24)),
-      ),
-      _ => const StartPage(),
-    },
-  );
+  Widget build(BuildContext context) =>
+      _pages.elementAtOrNull(_currentIndex) ?? const StartPage();
 }
 
 class AnimatedBackdrop extends StatelessWidget {
@@ -248,23 +242,20 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   void dispose() => super.dispose();
 
   @override
-  Widget build(BuildContext context) {
-    print('Build ShaderBackdrop');
-    return switch (shader) {
-      null => const SizedBox.expand(),
-      final shader => LayoutBuilder(
-        builder:
-            (context, constraints) => CustomPaint(
-              painter: ShaderPainter(
-                shader: shader,
-                fullSize: Size(constraints.maxWidth, constraints.maxHeight),
-                animationValue: widget.animationValue,
-              ),
-              size: Size(constraints.maxWidth, constraints.maxHeight),
+  Widget build(BuildContext context) => switch (shader) {
+    null => const SizedBox.expand(),
+    final shader => LayoutBuilder(
+      builder:
+          (context, constraints) => CustomPaint(
+            painter: ShaderPainter(
+              shader: shader,
+              fullSize: Size(constraints.maxWidth, constraints.maxHeight),
+              animationValue: widget.animationValue,
             ),
-      ),
-    };
-  }
+            size: Size(constraints.maxWidth, constraints.maxHeight),
+          ),
+    ),
+  };
 }
 
 class ShaderPainter extends CustomPainter {
@@ -276,9 +267,13 @@ class ShaderPainter extends CustomPainter {
            Paint()
              ..shader =
                  (shader
-                   ..setFloat(0, fullSize.width)
-                   ..setFloat(1, fullSize.height)
-                   ..setFloat(2, 90 + animationValue / 2));
+                   ..setFloat(_uWidth, fullSize.width)
+                   ..setFloat(_uHeight, fullSize.height)
+                   ..setFloat(_uAngle, 90 + animationValue / 2));
+
+  static const int _uWidth = 0;
+  static const int _uHeight = 1;
+  static const int _uAngle = 2;
 
   final FragmentShader shader;
   final Size fullSize;
@@ -286,14 +281,10 @@ class ShaderPainter extends CustomPainter {
   final Paint _paint;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    print('Paint Shader');
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
-      _paint,
-    );
-  }
+  void paint(Canvas canvas, Size size) => canvas.drawRect(
+    Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
+    _paint,
+  );
 
   @override
   bool shouldRepaint(covariant ShaderPainter oldDelegate) =>

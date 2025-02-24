@@ -6,13 +6,7 @@ class ShaderPainter extends CustomPainter {
     required this.shader,
     required this.fullSize,
     required this.animationValue,
-  }) : _paint =
-           Paint()
-             ..shader =
-                 (shader
-                   ..setFloat(_uWidth, fullSize.width)
-                   ..setFloat(_uHeight, fullSize.height)
-                   ..setFloat(_uAngle, 90 + animationValue / 2));
+  });
 
   static const int _uWidth = 0;
   static const int _uHeight = 1;
@@ -21,15 +15,26 @@ class ShaderPainter extends CustomPainter {
   final FragmentShader shader;
   final Size fullSize;
   final double animationValue;
-  final Paint _paint;
+  final Paint _paint = Paint();
 
   @override
-  void paint(Canvas canvas, Size size) => canvas.drawRect(
-    Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
-    _paint,
-  );
+  void paint(Canvas canvas, Size size) {
+    shader
+      ..setFloat(_uWidth, fullSize.width)
+      ..setFloat(_uHeight, fullSize.height)
+      ..setFloat(_uAngle, 90 + animationValue / 2);
+
+    _paint.shader = shader;
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
+      _paint,
+    );
+  }
 
   @override
-  bool shouldRepaint(covariant ShaderPainter oldDelegate) =>
-      oldDelegate.animationValue != animationValue;
+  bool shouldRepaint(covariant ShaderPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue ||
+        oldDelegate.shader != shader;
+  }
 }

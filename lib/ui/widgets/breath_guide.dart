@@ -22,8 +22,7 @@ class BreathGuide extends StatefulWidget {
 class _BreathGuideState extends State<BreathGuide>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final List<double> _keyPercentages;
-  late final List<double> _keyTimes; // Normalized time points (0.0 to 1.0)
+  late final List<({double percentage, double time})> _keys; // Normalized time
   late final Duration cycleDuration;
   late final Duration totalDuration;
 
@@ -37,23 +36,29 @@ class _BreathGuideState extends State<BreathGuide>
     totalDuration = cycleDuration * widget.totalRepetitions;
 
     // Pre-calculate key percentages and times for one cycle.
-    final percentages = <double>[];
-    final times = <double>[];
-    double currentTime = 0;
+    final keys = <({double percentage, double time})>[];
+    var currentTime = Duration.zero;
 
     // Start at 0% (center).
-    percentages.add(0);
-    times.add(0);
+    keys.add((percentage: 0, time: 0));
     for (final step in widget.pattern) {
-      currentTime += step.duration.inMilliseconds / 1000.0;
-      percentages.add(step.breathTo);
-      times.add(currentTime);
+      currentTime += step.duration;
+      keys.add((
+        percentage: step.breathTo,
+        time: currentTime.inSeconds.toDouble(),
+      ));
     }
-    final normalizedTimes =
-        times.map((t) => t / cycleDuration.inSeconds).toList();
+    final normalizedKeyTimes =
+        keys
+            .map(
+              (k) => (
+                percentage: k.percentage,
+                time: k.time / cycleDuration.inSeconds,
+              ),
+            )
+            .toList();
 
-    _keyPercentages = percentages;
-    _keyTimes = normalizedTimes;
+    _keys = normalizedKeyTimes;
 
     _controller = AnimationController(vsync: this, duration: totalDuration)
       ..addListener(() => setState(() {}));
@@ -76,16 +81,16 @@ class _BreathGuideState extends State<BreathGuide>
 
   double getCurrentBreathPercentage() {
     var index = 0;
-    while (index < _keyTimes.length - 1 &&
-        getCycleProgress() > _keyTimes[index + 1]) {
+    while (index < _keys.length - 1 &&
+        getCycleProgress() > _keys[index + 1].time) {
       index++;
     }
-    if (index >= _keyTimes.length - 1) return _keyPercentages.last;
+    if (index >= _keys.length - 1) return _keys.last.percentage;
 
-    final t1 = _keyTimes[index];
-    final t2 = _keyTimes[index + 1];
-    final v1 = _keyPercentages[index];
-    final v2 = _keyPercentages[index + 1];
+    final t1 = _keys[index].time;
+    final t2 = _keys[index + 1].time;
+    final v1 = _keys[index].percentage;
+    final v2 = _keys[index + 1].percentage;
 
     var localProgress = (getCycleProgress() - t1) / (t2 - t1);
 
@@ -98,57 +103,56 @@ class _BreathGuideState extends State<BreathGuide>
       (_controller.value * widget.totalRepetitions).floor() + 1;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder:
-        (context, constraints) => Stack(
-          children: [
-            // Backdrop showing the full breathing pattern.
-            CustomPaint(
-              size: Size(constraints.maxWidth, constraints.maxHeight),
-              painter: BreathPatternPainter(
-                context,
-                keyPercentages: _keyPercentages,
-                keyTimes: _keyTimes,
+  Widget build(BuildContext context) {
+    print('Rebuilt guide!');
+    return LayoutBuilder(
+      builder:
+          (context, constraints) => Stack(
+            children: [
+              // Backdrop showing the full breathing pattern.
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: BreathPatternPainter(context, keys: _keys),
               ),
-            ),
-            // The active animation on top.
-            CustomPaint(
-              size: Size(constraints.maxWidth, constraints.maxHeight),
-              painter: _BreathPainter(
-                context,
-                cycleProgress: getCycleProgress(),
-                breathPercent: getCurrentBreathPercentage(),
+              // The active animation on top.
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: _BreathPainter(
+                  context,
+                  cycleProgress: getCycleProgress(),
+                  breathPercent: getCurrentBreathPercentage(),
+                ),
               ),
-            ),
-            Center(
-              child: AnimatedSwitcher(
-                duration: Durations.long1,
-                transitionBuilder:
-                    (Widget child, Animation<double> animation) =>
-                        FadeTransition(opacity: animation, child: child),
-                child: FittedBox(
-                  fit: BoxFit.fitWidth,
-                  key: ValueKey<int>(getCurrentRepetition()),
-                  child: Text(
-                    switch (1 +
-                        widget.totalRepetitions -
-                        getCurrentRepetition()) {
-                      0 => '',
-                      final int i => '$i',
-                    },
-                    style: TextStyle(
-                      fontSize: 1000,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.2),
+              Center(
+                child: AnimatedSwitcher(
+                  duration: Durations.long1,
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) =>
+                          FadeTransition(opacity: animation, child: child),
+                  child: FittedBox(
+                    fit: BoxFit.fitWidth,
+                    key: ValueKey<int>(getCurrentRepetition()),
+                    child: Text(
+                      switch (1 +
+                          widget.totalRepetitions -
+                          getCurrentRepetition()) {
+                        0 => '',
+                        final int i => '$i',
+                      },
+                      style: TextStyle(
+                        fontSize: 1000,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.2),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-  );
+            ],
+          ),
+    );
+  }
 }
 
 class _BreathPainter extends CustomPainter {

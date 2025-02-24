@@ -27,9 +27,6 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   }
 
   @override
-  void dispose() => super.dispose();
-
-  @override
   Widget build(BuildContext context) => switch (shader) {
     null => const SizedBox.expand(),
     final shader => LayoutBuilder(

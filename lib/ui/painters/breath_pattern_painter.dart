@@ -3,21 +3,22 @@ import 'package:flutter/material.dart';
 class BreathPatternPainter extends CustomPainter {
   BreathPatternPainter(
     BuildContext context, {
-    required this.keyPercentages,
-    required this.keyTimes,
+    required this.keys,
     this.tension = 0.42,
   }) : _paint =
            Paint()
              ..color = Theme.of(context).colorScheme.onPrimary
              ..strokeWidth = 2.0
              ..style = PaintingStyle.stroke;
-  final List<double> keyPercentages;
-  final List<double> keyTimes;
+
+  final List<({double percentage, double time})> keys;
   final double tension;
   final Paint _paint;
 
   @override
   void paint(Canvas canvas, Size size) {
+    print('Repainted pattern!');
+
     // Calculate the center horizontal.
     final centerX = size.width / 2;
 
@@ -46,11 +47,11 @@ class BreathPatternPainter extends CustomPainter {
   ) {
     final path = Path()..moveTo(centerX, 0);
     // The keyTimes map to vertical positions along the height.
-    for (var i = 0; i < keyPercentages.length - 1; i++) {
-      final percent = keyPercentages[i];
-      final nextPercent = keyPercentages[i + 1];
-      final timeFactor = keyTimes[i];
-      final nextTimeFactor = keyTimes[i + 1];
+    for (var i = 0; i < keys.length - 1; i++) {
+      final percent = keys[i].percentage;
+      final nextPercent = keys[i + 1].percentage;
+      final timeFactor = keys[i].time;
+      final nextTimeFactor = keys[i + 1].time;
 
       final x = calculateX(centerX, percent);
       final y = size.height * timeFactor;
@@ -77,6 +78,6 @@ class BreathPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BreathPatternPainter oldDelegate) {
-    return false;
+    return keys != oldDelegate.keys || tension != oldDelegate.tension;
   }
 }

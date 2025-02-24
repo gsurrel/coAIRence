@@ -84,106 +84,6 @@ class _MainScaffoldState extends State<MainScaffold>
     }
   }
 
-  @override
-  Widget build(BuildContext context) => RepaintBoundary(
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: 'co',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextSpan(
-                text: 'AIR',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              TextSpan(
-                text: 'ence',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          RepaintBoundary(child: AnimatedBackdrop(animation: _animation)),
-          RepaintBoundary(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeInOut,
-              switchOutCurve: Curves.easeInOut,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                final isEntering = switch (child.key) {
-                  ValueKey<int>(:final int value) => value == _currentIndex,
-                  _ => false,
-                };
-                if (isEntering) {
-                  final enterTween = _getEnterTween();
-                  return SlideTransition(
-                    position: animation.drive(
-                      enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                    ),
-                    child: child,
-                  );
-                } else {
-                  final exitTween = _getExitTween();
-                  return SlideTransition(
-                    position: animation.drive(
-                      exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                    ),
-                    child: child,
-                  );
-                }
-              },
-              child: PageLoader(
-                key: ValueKey<int>(_currentIndex),
-                currentIndex: _currentIndex,
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Exercises',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_fill),
-            label: 'Start',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class PageLoader extends StatelessWidget {
-  const PageLoader({required int currentIndex, super.key})
-    : _currentIndex = currentIndex;
-
   static const _pages = [
     Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Exercises Page', style: TextStyle(fontSize: 24))),
@@ -192,11 +92,93 @@ class PageLoader extends StatelessWidget {
     Center(child: Text('Settings Page', style: TextStyle(fontSize: 24))),
   ];
 
-  final int _currentIndex;
-
   @override
-  Widget build(BuildContext context) =>
-      _pages.elementAtOrNull(_currentIndex) ?? const StartPage();
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: 'co',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(
+              text: 'AIR',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextSpan(
+              text: 'ence',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    body: Stack(
+      children: [
+        AnimatedBackdrop(animation: _animation),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          switchInCurve: Curves.easeInOut,
+          switchOutCurve: Curves.easeInOut,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            final isEntering = switch (child.key) {
+              ValueKey<int>(:final int value) => value == _currentIndex,
+              _ => false,
+            };
+            if (isEntering) {
+              final enterTween = _getEnterTween();
+              return SlideTransition(
+                position: animation.drive(
+                  enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                ),
+                child: child,
+              );
+            } else {
+              final exitTween = _getExitTween();
+              return SlideTransition(
+                position: animation.drive(
+                  exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                ),
+                child: child,
+              );
+            }
+          },
+          child: Container(
+            key: ValueKey<int>(_currentIndex),
+            child: _pages.elementAtOrNull(_currentIndex) ?? const StartPage(),
+          ),
+        ),
+      ],
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      currentIndex: _currentIndex,
+      type: BottomNavigationBarType.fixed,
+      onTap: _onItemTapped,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.fitness_center),
+          label: 'Exercises',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.play_circle_fill),
+          label: 'Start',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+      ],
+    ),
+  );
 }
 
 class AnimatedBackdrop extends StatelessWidget {

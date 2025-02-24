@@ -25,31 +25,47 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold> {
+class _MainScaffoldState extends State<MainScaffold>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 2;
   int _previousIndex = 2;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
 
-  Widget _getPageForIndex(int index) => switch (index) {
-    0 => const Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
-    1 => const Center(
-      child: Text('Exercises Page', style: TextStyle(fontSize: 24)),
-    ),
-    2 => const StartPage(),
-    3 => const Center(
-      child: Text('Profile Page', style: TextStyle(fontSize: 24)),
-    ),
-    4 => const Center(
-      child: Text('Settings Page', style: TextStyle(fontSize: 24)),
-    ),
-    _ => const StartPage(),
-  };
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = Tween<double>(
+      begin: _previousIndex.toDouble(),
+      end: _currentIndex.toDouble(),
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int targetIndex) {
     if (targetIndex == _currentIndex) return;
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = targetIndex;
+      _animation = Tween<double>(
+        begin: _previousIndex.toDouble(),
+        end: _currentIndex.toDouble(),
+      ).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      );
     });
+    _animationController.forward(from: 0);
   }
 
   Tween<Offset> _getEnterTween() {
@@ -67,6 +83,14 @@ class _MainScaffoldState extends State<MainScaffold> {
       return Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
     }
   }
+
+  static const _pages = [
+    Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    Center(child: Text('Exercises Page', style: TextStyle(fontSize: 24))),
+    StartPage(),
+    Center(child: Text('Profile Page', style: TextStyle(fontSize: 24))),
+    Center(child: Text('Settings Page', style: TextStyle(fontSize: 24))),
+  ];
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -101,7 +125,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     ),
     body: Stack(
       children: [
-        const ShaderBackdrop(),
+        AnimatedBackdrop(animation: _animation),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeInOut,
@@ -129,9 +153,9 @@ class _MainScaffoldState extends State<MainScaffold> {
               );
             }
           },
-          child: KeyedSubtree(
+          child: Container(
             key: ValueKey<int>(_currentIndex),
-            child: _getPageForIndex(_currentIndex),
+            child: _pages.elementAtOrNull(_currentIndex) ?? const StartPage(),
           ),
         ),
       ],
@@ -148,7 +172,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.play_circle_fill),
-          label: 'Breathe',
+          label: 'Start',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
@@ -157,8 +181,25 @@ class _MainScaffoldState extends State<MainScaffold> {
   );
 }
 
+class AnimatedBackdrop extends StatelessWidget {
+  const AnimatedBackdrop({required Animation<double> animation, super.key})
+    : _animation = animation;
+
+  final Animation<double> _animation;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _animation,
+    builder:
+        (BuildContext context, Widget? child) =>
+            ShaderBackdrop(animationValue: _animation.value),
+  );
+}
+
 class ShaderBackdrop extends StatefulWidget {
-  const ShaderBackdrop({super.key});
+  const ShaderBackdrop({required this.animationValue, super.key});
+
+  final double animationValue;
 
   @override
   State<ShaderBackdrop> createState() => _ShaderBackdropState();
@@ -184,13 +225,14 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
 
   @override
   Widget build(BuildContext context) => switch (shader) {
-    null => const Center(child: CircularProgressIndicator()),
+    null => const SizedBox.expand(),
     final shader => LayoutBuilder(
       builder:
           (context, constraints) => CustomPaint(
             painter: ShaderPainter(
               shader: shader,
               fullSize: Size(constraints.maxWidth, constraints.maxHeight),
+              animationValue: widget.animationValue,
             ),
             size: Size(constraints.maxWidth, constraints.maxHeight),
           ),
@@ -199,17 +241,25 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
 }
 
 class ShaderPainter extends CustomPainter {
-  ShaderPainter({required this.shader, required this.fullSize})
-    : _paint =
-          Paint()
-            ..shader =
-                (shader
-                  ..setFloat(0, fullSize.width)
-                  ..setFloat(1, fullSize.height)
-                  ..setFloat(2, 60));
+  ShaderPainter({
+    required this.shader,
+    required this.fullSize,
+    required this.animationValue,
+  }) : _paint =
+           Paint()
+             ..shader =
+                 (shader
+                   ..setFloat(_uWidth, fullSize.width)
+                   ..setFloat(_uHeight, fullSize.height)
+                   ..setFloat(_uAngle, 90 + animationValue / 2));
+
+  static const int _uWidth = 0;
+  static const int _uHeight = 1;
+  static const int _uAngle = 2;
 
   final FragmentShader shader;
   final Size fullSize;
+  final double animationValue;
   final Paint _paint;
 
   @override
@@ -219,66 +269,8 @@ class ShaderPainter extends CustomPainter {
   );
 
   @override
-  bool shouldRepaint(covariant ShaderPainter oldDelegate) => false;
-}
-
-class GlowingIcon extends StatefulWidget {
-  const GlowingIcon({required this.icon, required this.size, super.key});
-
-  final IconData icon;
-  final double size;
-
-  @override
-  State<GlowingIcon> createState() => _GlowingIconState();
-}
-
-class _GlowingIconState extends State<GlowingIcon>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-    _animation = Tween<double>(
-      begin: 0,
-      end: 20,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-    _controller.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _animation,
-    builder:
-        (context, child) => Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).colorScheme.onPrimary,
-                blurRadius: _animation.value,
-                spreadRadius: _animation.value / 2,
-              ),
-            ],
-          ),
-          child: Icon(
-            widget.icon,
-            size: widget.size,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-  );
+  bool shouldRepaint(covariant ShaderPainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue;
 }
 
 @immutable
@@ -320,7 +312,7 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin {
                       onPressed: () => setState(() => showButton = false),
                       child: const Padding(
                         padding: EdgeInsets.all(30),
-                        child: Text('Breathe', style: TextStyle(fontSize: 34)),
+                        child: Text('Start', style: TextStyle(fontSize: 34)),
                       ),
                     ),
                   ),
@@ -513,7 +505,7 @@ class _BreathPainter extends CustomPainter {
     final centerX = size.width / 2;
     final offset = centerX * breathPercent;
     final height = cycleProgress * size.height;
-    final lipSize = sqrt(offset*4);
+    final lipSize = sqrt(offset * 4);
 
     // Draw the path on the canvas
     final path =
@@ -536,7 +528,9 @@ class _BreathPainter extends CustomPainter {
           )
           ..close();
 
-    canvas..drawPath(path, _paintFill)..drawPath(path, _paintBorder);
+    canvas
+      ..drawPath(path, _paintFill)
+      ..drawPath(path, _paintBorder);
   }
 
   @override

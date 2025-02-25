@@ -1,25 +1,26 @@
-import 'package:coairence/data/models/breath_step.dart';
+import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/repositories/breathe_repository.dart';
 import 'package:coairence/data/services/breathe_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final startPageProvider = ChangeNotifierProvider<StartPageState>((ref) {
+final breathPageProvider = ChangeNotifierProvider<BreathPageState>((ref) {
   final repository = BreatheRepository();
   final service = BreatheService(repository);
-  return StartPageState(service);
+  return BreathPageState(service);
 });
 
-class StartPageState extends ChangeNotifier {
-  StartPageState(this._service);
+class BreathPageState extends ChangeNotifier {
+  BreathPageState(this._service);
 
   final BreatheService _service;
 
   bool _showButton = true;
   bool get showButton => _showButton;
 
-  List<List<BreathStep>> get patterns => _service.fetchAllPatterns();
-  List<BreathStep> get pattern => _service.fetchSelectedPattern();
+  List<BreathingPattern> get patterns => _service.fetchAllPatterns();
+  BreathingPattern get pattern => _service.fetchSelectedPattern();
+  int get selectedPatternIndex => _service.selectedPatternIndex;
 
   void toggleShowButton() {
     _showButton = !_showButton;

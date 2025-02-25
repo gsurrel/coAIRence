@@ -9,8 +9,7 @@ class ExercisesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breathePageState = ref.watch(breathPageProvider);
-    final selectedPatternIndex =
-        ref.watch(breathPageProvider).selectedPatternIndex;
+    final selectedPatternIndex = breathePageState.selectedPatternIndex;
 
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -28,7 +27,7 @@ class ExercisesPage extends ConsumerWidget {
                   .read(breathPageProvider.notifier)
                   .updateSelectedPattern(index),
           onLongPress: () {
-            showModalBottomSheet(
+            showModalBottomSheet<void>(
               context: context,
               builder: (context) {
                 return Padding(

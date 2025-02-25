@@ -11,8 +11,7 @@ class BreathePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breathePageState = ref.watch(breathPageProvider);
-    final toggleShowButton =
-        ref.read(breathPageProvider.notifier).toggleShowButton;
+    final toggleShowButton = breathePageState.toggleShowButton;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -29,8 +28,7 @@ class BreathePage extends ConsumerWidget {
                           child: BreatheButton(onPressed: toggleShowButton),
                         )
                         : BreathGuide(
-                          pattern:
-                              ref.read(breathPageProvider.notifier).pattern,
+                          pattern: breathePageState.pattern,
                           totalRepetitions: 5,
                           onExerciseCompleted: toggleShowButton,
                         ),

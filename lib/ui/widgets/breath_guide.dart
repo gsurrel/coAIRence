@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:coairence/data/models/breath_step.dart';
+import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/ui/painters/breath_pattern_painter.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +11,7 @@ class BreathGuide extends StatefulWidget {
     super.key,
   });
 
-  final List<BreathStep> pattern;
+  final BreathingPattern pattern;
   final int totalRepetitions;
   final VoidCallback onExerciseCompleted;
 
@@ -29,7 +29,7 @@ class _BreathGuideState extends State<BreathGuide>
   @override
   void initState() {
     super.initState();
-    cycleDuration = widget.pattern.fold<Duration>(
+    cycleDuration = widget.pattern.steps.fold<Duration>(
       Duration.zero,
       (prev, step) => prev + step.duration,
     );
@@ -41,7 +41,7 @@ class _BreathGuideState extends State<BreathGuide>
 
     // Start at 0% (center).
     keys.add((percentage: 0, time: 0));
-    for (final step in widget.pattern) {
+    for (final step in widget.pattern.steps) {
       currentTime += step.duration;
       keys.add((
         percentage: step.breathTo,

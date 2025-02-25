@@ -1,5 +1,6 @@
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
+import 'package:coairence/ui/views/exercises_page.dart';
 import 'package:flutter/material.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -70,7 +71,7 @@ class _MainScaffoldState extends State<MainScaffold>
 
   static const _pages = [
     Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Exercises Page', style: TextStyle(fontSize: 24))),
+    ExercisesPage(),
     BreathePage(),
     Center(child: Text('Profile Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Settings Page', style: TextStyle(fontSize: 24))),

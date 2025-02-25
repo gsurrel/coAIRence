@@ -1,4 +1,4 @@
-import 'package:coairence/ui/viewmodels/start_page_provider.dart';
+import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breathe_button.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +10,8 @@ class BreathePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final startPageState = ref.watch(startPageProvider);
-    final toggleShowButton =
-        ref.read(startPageProvider.notifier).toggleShowButton;
+    final breathePageState = ref.watch(breathPageProvider);
+    final toggleShowButton = breathePageState.toggleShowButton;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -24,12 +23,12 @@ class BreathePage extends ConsumerWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child:
-                    startPageState.showButton
+                    breathePageState.showButton
                         ? Center(
                           child: BreatheButton(onPressed: toggleShowButton),
                         )
                         : BreathGuide(
-                          pattern: ref.read(startPageProvider.notifier).pattern,
+                          pattern: breathePageState.pattern,
                           totalRepetitions: 5,
                           onExerciseCompleted: toggleShowButton,
                         ),

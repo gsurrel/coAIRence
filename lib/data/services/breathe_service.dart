@@ -1,4 +1,4 @@
-import 'package:coairence/data/models/breath_step.dart';
+import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/repositories/breathe_repository.dart';
 
 class BreatheService {
@@ -6,9 +6,9 @@ class BreatheService {
 
   final BreatheRepository _repository;
 
-  List<List<BreathStep>> fetchAllPatterns() => _repository.patterns;
+  List<BreathingPattern> fetchAllPatterns() => _repository.patterns;
 
-  List<BreathStep> fetchSelectedPattern() => _repository.selectedPattern;
+  BreathingPattern fetchSelectedPattern() => _repository.selectedPattern;
 
   int get selectedPatternIndex => _repository.selectedPatternIndex;
   set selectedPatternIndex(int index) =>

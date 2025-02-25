@@ -10,7 +10,7 @@ class BreathePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final startPageState = ref.watch(breathPageProvider);
+    final breathePageState = ref.watch(breathPageProvider);
     final toggleShowButton =
         ref.read(breathPageProvider.notifier).toggleShowButton;
 
@@ -24,7 +24,7 @@ class BreathePage extends ConsumerWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child:
-                    startPageState.showButton
+                    breathePageState.showButton
                         ? Center(
                           child: BreatheButton(onPressed: toggleShowButton),
                         )

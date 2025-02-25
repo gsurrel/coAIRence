@@ -73,7 +73,7 @@ class BreatheRepository {
   ];
 
   int get selectedPatternIndex => _selectedPatternIndex;
-  int _selectedPatternIndex = 1;
+  int _selectedPatternIndex = 0;
   set selectedPatternIndex(int index) {
     _selectedPatternIndex = min(max(index, 0), _patterns.length - 1);
   }

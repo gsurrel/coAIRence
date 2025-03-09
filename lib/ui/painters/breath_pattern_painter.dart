@@ -17,8 +17,6 @@ class BreathPatternPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print('Repainted pattern!');
-
     // Calculate the center horizontal.
     final centerX = size.width / 2;
 

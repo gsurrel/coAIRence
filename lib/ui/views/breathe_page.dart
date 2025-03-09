@@ -17,24 +17,18 @@ class BreathePage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 48),
-        child: Stack(
-          children: [
-            Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child:
-                    breathePageState.showButton
-                        ? Center(
-                          child: BreatheButton(onPressed: toggleShowButton),
-                        )
-                        : BreathGuide(
-                          pattern: breathePageState.pattern,
-                          totalRepetitions: 5,
-                          onExerciseCompleted: toggleShowButton,
-                        ),
-              ),
-            ),
-          ],
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child:
+                breathePageState.showButton
+                    ? Center(child: BreatheButton(onPressed: toggleShowButton))
+                    : BreathGuide(
+                      pattern: breathePageState.pattern,
+                      totalRepetitions: 5,
+                      onExerciseCompleted: toggleShowButton,
+                    ),
+          ),
         ),
       ),
     );

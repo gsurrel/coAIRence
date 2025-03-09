@@ -4,7 +4,7 @@ import 'package:coairence/data/models/breathing_pattern.dart';
 
 class BreatheRepository {
   final List<BreathingPattern> _patterns = [
-    (
+    BreathingPattern(
       name: 'Box Breathing',
       description:
           'Inhale, hold, exhale, and hold again, each for an equal count.',
@@ -15,7 +15,7 @@ class BreatheRepository {
         (breathTo: 0.0, duration: const Duration(seconds: 4)), // hold for 4s
       ],
     ),
-    (
+    BreathingPattern(
       name: '4-7-8 Breathing',
       description:
           'Inhale for 4 seconds, hold for 7 seconds, and exhale for 8 seconds.',
@@ -25,7 +25,7 @@ class BreatheRepository {
         (breathTo: 0.0, duration: const Duration(seconds: 8)), // exhale over 8s
       ],
     ),
-    (
+    BreathingPattern(
       name: 'Diaphragmatic Breathing',
       description: 'Deep breaths that engage the diaphragm.',
       steps: [
@@ -33,7 +33,7 @@ class BreatheRepository {
         (breathTo: 0.0, duration: const Duration(seconds: 5)), // exhale over 5s
       ],
     ),
-    (
+    BreathingPattern(
       name: 'Alternate Nostril Breathing',
       description:
           'Breathing through one nostril at a time while closing the other '
@@ -51,7 +51,7 @@ class BreatheRepository {
         (breathTo: 0.0, duration: const Duration(seconds: 4)), // hold for 4s
       ],
     ),
-    (
+    BreathingPattern(
       name: 'Pursed Lip Breathing',
       description:
           'Inhale through the nose and exhale slowly through pursed lips.',
@@ -60,7 +60,7 @@ class BreatheRepository {
         (breathTo: 0.0, duration: const Duration(seconds: 6)), // exhale over 6s
       ],
     ),
-    (
+    BreathingPattern(
       name: 'Resonant Breathing',
       description:
           'Breathe at a rate of 5 breaths per minute, with equal time for '

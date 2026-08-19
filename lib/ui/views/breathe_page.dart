@@ -1,8 +1,8 @@
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breathe_button.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 @immutable
 class BreathePage extends ConsumerWidget {
@@ -20,14 +20,13 @@ class BreathePage extends ConsumerWidget {
         child: Center(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 500),
-            child:
-                breathePageState.showButton
-                    ? Center(child: BreatheButton(onPressed: toggleShowButton))
-                    : BreathGuide(
-                      pattern: breathePageState.pattern,
-                      totalRepetitions: 5,
-                      onExerciseCompleted: toggleShowButton,
-                    ),
+            child: breathePageState.showButton
+                ? Center(child: BreatheButton(onPressed: toggleShowButton))
+                : BreathGuide(
+                    pattern: breathePageState.pattern,
+                    totalRepetitions: 5,
+                    onExerciseCompleted: toggleShowButton,
+                  ),
           ),
         ),
       ),

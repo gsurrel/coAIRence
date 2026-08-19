@@ -1,7 +1,7 @@
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
 import 'package:coairence/ui/views/exercises_page.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -24,12 +24,16 @@ class _MainScaffoldState extends State<MainScaffold>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: _previousIndex.toDouble(),
-      end: _currentIndex.toDouble(),
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    _animation =
+        Tween<double>(
+          begin: _previousIndex.toDouble(),
+          end: _currentIndex.toDouble(),
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
   }
 
   @override
@@ -43,12 +47,16 @@ class _MainScaffoldState extends State<MainScaffold>
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = targetIndex;
-      _animation = Tween<double>(
-        begin: _previousIndex.toDouble(),
-        end: _currentIndex.toDouble(),
-      ).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-      );
+      _animation =
+          Tween<double>(
+            begin: _previousIndex.toDouble(),
+            end: _currentIndex.toDouble(),
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeInOut,
+            ),
+          );
     });
     _animationController.forward(from: 0);
   }

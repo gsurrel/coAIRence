@@ -1,17 +1,15 @@
 import 'package:coairence/ui/widgets/shader_backdrop.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AnimatedBackdrop extends StatelessWidget {
-  const AnimatedBackdrop({required Animation<double> animation, super.key})
-    : _animation = animation;
+  const AnimatedBackdrop({required this._animation, super.key});
 
   final Animation<double> _animation;
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _animation,
-    builder:
-        (BuildContext context, Widget? child) =>
-            ShaderBackdrop(animationValue: _animation.value),
+    builder: (context, child) =>
+        ShaderBackdrop(animationValue: _animation.value),
   );
 }

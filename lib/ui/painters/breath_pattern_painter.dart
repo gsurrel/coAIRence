@@ -1,15 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BreathPatternPainter extends CustomPainter {
   BreathPatternPainter(
     BuildContext context, {
     required this.keys,
     this.tension = 0.42,
-  }) : _paint =
-           Paint()
-             ..color = Theme.of(context).colorScheme.onPrimary
-             ..strokeWidth = 2.0
-             ..style = PaintingStyle.stroke;
+  }) : _paint = Paint()
+         ..color = Theme.of(context).colorScheme.onPrimary
+         ..strokeWidth = 2.0
+         ..style = PaintingStyle.stroke;
 
   final List<({double percentage, double time})> keys;
   final double tension;

@@ -11,7 +11,9 @@ class BreathePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breathePageState = ref.watch(breathPageProvider);
-    final toggleShowButton = breathePageState.toggleShowButton;
+    final toggleShowButton = ref
+        .read(breathPageProvider.notifier)
+        .toggleShowButton;
 
     return Scaffold(
       backgroundColor: Colors.transparent,

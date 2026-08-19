@@ -160,12 +160,12 @@ class _MainScaffoldState extends State<MainScaffold>
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.wind_power),
-          label: 'Breathes',
+          icon: Icon(Icons.air),
+          label: 'Patterns',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.play_circle_fill),
-          label: 'Start',
+          label: 'Breathe',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),

@@ -20,15 +20,12 @@ class BreathingPattern {
         time: currentTime.inSeconds.toDouble(),
       ));
     }
-    final normalizedKeyTimes =
-        keys
-            .map(
-              (k) => (
-                percentage: k.percentage,
-                time: k.time / currentTime.inSeconds,
-              ),
-            )
-            .toList();
+    final normalizedKeyTimes = keys
+        .map(
+          (k) =>
+              (percentage: k.percentage, time: k.time / currentTime.inSeconds),
+        )
+        .toList();
 
     _keys = normalizedKeyTimes;
   }

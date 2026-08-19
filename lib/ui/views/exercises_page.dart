@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ExercisesPage extends ConsumerWidget {
   const ExercisesPage({super.key});
@@ -22,30 +24,31 @@ class ExercisesPage extends ConsumerWidget {
         final isSelected = index == selectedPatternIndex;
 
         return GestureDetector(
-          onTap:
-              () => ref
-                  .read(breathPageProvider.notifier)
-                  .updateSelectedPattern(index),
+          onTap: () => ref
+              .read(breathPageProvider.notifier)
+              .updateSelectedPattern(index),
           onLongPress: () {
-            showModalBottomSheet<void>(
-              context: context,
-              builder: (context) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pattern.name,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(pattern.description),
-                    ],
-                  ),
-                );
-              },
+            unawaited(
+              showModalBottomSheet<void>(
+                context: context,
+                builder: (context) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          pattern.name,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(pattern.description),
+                      ],
+                    ),
+                  );
+                },
+              ),
             );
           },
           child: Container(
@@ -53,10 +56,9 @@ class ExercisesPage extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             decoration: BoxDecoration(
               border: Border.all(
-                color:
-                    isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onPrimary,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onPrimary,
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(8),

@@ -2,7 +2,7 @@ import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/repositories/breathe_repository.dart';
 import 'package:coairence/data/services/breathe_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final breathPageProvider = ChangeNotifierProvider<BreathPageState>((ref) {
   final repository = BreatheRepository();

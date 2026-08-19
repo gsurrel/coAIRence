@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:ui';
+
 import 'package:coairence/ui/painters/shader_painter.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ShaderBackdrop extends StatefulWidget {
   const ShaderBackdrop({required this.animationValue, super.key});
@@ -17,7 +19,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   @override
   void initState() {
     super.initState();
-    _loadMyShader();
+    unawaited(_loadMyShader());
   }
 
   Future<void> _loadMyShader() async {
@@ -30,15 +32,14 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   Widget build(BuildContext context) => switch (shader) {
     null => const SizedBox.expand(),
     final shader => LayoutBuilder(
-      builder:
-          (context, constraints) => CustomPaint(
-            painter: ShaderPainter(
-              shader: shader,
-              fullSize: Size(constraints.maxWidth, constraints.maxHeight),
-              animationValue: widget.animationValue,
-            ),
-            size: Size(constraints.maxWidth, constraints.maxHeight),
-          ),
+      builder: (context, constraints) => CustomPaint(
+        painter: ShaderPainter(
+          shader: shader,
+          fullSize: Size(constraints.maxWidth, constraints.maxHeight),
+          animationValue: widget.animationValue,
+        ),
+        size: Size(constraints.maxWidth, constraints.maxHeight),
+      ),
     ),
   };
 }

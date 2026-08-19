@@ -4,18 +4,19 @@ publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.7.0
+  sdk: ^3.13.0
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_riverpod: ^2.6.1
+  flutter_riverpod: ^3.4.2
 
+  material_ui: any
 dev_dependencies:
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^10.3.0
 
 flutter:
   uses-material-design: true

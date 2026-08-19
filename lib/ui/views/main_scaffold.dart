@@ -1,7 +1,7 @@
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
-import 'package:coairence/ui/views/exercises_page.dart';
-import 'package:flutter/material.dart';
+import 'package:coairence/ui/views/breathes_library.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -24,12 +24,16 @@ class _MainScaffoldState extends State<MainScaffold>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: _previousIndex.toDouble(),
-      end: _currentIndex.toDouble(),
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    _animation =
+        Tween<double>(
+          begin: _previousIndex.toDouble(),
+          end: _currentIndex.toDouble(),
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
   }
 
   @override
@@ -43,12 +47,16 @@ class _MainScaffoldState extends State<MainScaffold>
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = targetIndex;
-      _animation = Tween<double>(
-        begin: _previousIndex.toDouble(),
-        end: _currentIndex.toDouble(),
-      ).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-      );
+      _animation =
+          Tween<double>(
+            begin: _previousIndex.toDouble(),
+            end: _currentIndex.toDouble(),
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeInOut,
+            ),
+          );
     });
     _animationController.forward(from: 0);
   }
@@ -69,9 +77,9 @@ class _MainScaffoldState extends State<MainScaffold>
     }
   }
 
-  static const _pages = [
+  static const List<Widget> _pages = [
     Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
-    ExercisesPage(),
+    BreathesLibraryPage(),
     BreathePage(),
     Center(child: Text('Profile Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Settings Page', style: TextStyle(fontSize: 24))),
@@ -115,7 +123,7 @@ class _MainScaffoldState extends State<MainScaffold>
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (Widget child, Animation<double> animation) {
+          transitionBuilder: (child, animation) {
             final isEntering = switch (child.key) {
               ValueKey<int>(:final int value) => value == _currentIndex,
               _ => false,
@@ -152,8 +160,8 @@ class _MainScaffoldState extends State<MainScaffold>
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.fitness_center),
-          label: 'Exercises',
+          icon: Icon(Icons.wind_power),
+          label: 'Breathes',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.play_circle_fill),

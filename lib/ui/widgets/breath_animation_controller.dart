@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:coairence/data/models/breathing_pattern.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BreathAnimationController extends StatefulWidget {
   const BreathAnimationController({
@@ -41,14 +43,16 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
     );
     totalDuration = cycleDuration * widget.totalRepetitions;
 
-    _controller = AnimationController(vsync: this, duration: totalDuration)
-      ..addListener(() => setState(() {}));
-    _controller.forward().whenComplete(() {
-      if (getCurrentRepetition() >= widget.totalRepetitions) {
-        _controller.stop();
-        widget.onExerciseCompleted();
-      }
-    });
+    _controller = AnimationController(vsync: this, duration: totalDuration);
+
+    unawaited(
+      _controller.forward().whenComplete(() {
+        if (getCurrentRepetition() >= widget.totalRepetitions) {
+          _controller.stop();
+          widget.onExerciseCompleted();
+        }
+      }),
+    );
   }
 
   @override
@@ -68,11 +72,16 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
 
   @override
   Widget build(BuildContext context) {
-    return widget.child(
-      context,
-      getCycleProgress,
-      getCurrentBreathPercentage,
-      getCurrentRepetition,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return widget.child(
+          context,
+          getCycleProgress,
+          getCurrentBreathPercentage,
+          getCurrentRepetition,
+        );
+      },
     );
   }
 }

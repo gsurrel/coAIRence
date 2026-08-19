@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BreathCurve extends StatelessWidget {
   const BreathCurve({
@@ -30,15 +30,13 @@ class _BreathPainter extends CustomPainter {
     BuildContext context, {
     required this.cycleProgress,
     required this.breathPercent,
-  }) : _paintFill =
-           Paint()
-             ..color = Theme.of(context).colorScheme.primary.withAlpha(150),
-       _paintBorder =
-           Paint()
-             ..color = Theme.of(context).colorScheme.primary
-             ..strokeWidth = 2.0
-             ..strokeCap = StrokeCap.round
-             ..style = PaintingStyle.stroke;
+  }) : _paintFill = Paint()
+         ..color = Theme.of(context).colorScheme.primary.withAlpha(150),
+       _paintBorder = Paint()
+         ..color = Theme.of(context).colorScheme.primary
+         ..strokeWidth = 2.0
+         ..strokeCap = StrokeCap.round
+         ..style = PaintingStyle.stroke;
 
   final double breathPercent;
   final double cycleProgress;
@@ -53,25 +51,24 @@ class _BreathPainter extends CustomPainter {
     final lipSize = 2 * sqrt(offset);
 
     // Draw the path on the canvas
-    final path =
-        Path()
-          // Move to the starting point of the left bracket
-          ..moveTo(centerX - offset, height)
-          // Draw the top lip
-          ..quadraticBezierTo(
-            centerX,
-            height - lipSize,
-            centerX + offset,
-            height,
-          )
-          // Draw the bottom lip
-          ..quadraticBezierTo(
-            centerX,
-            height + lipSize,
-            centerX - offset,
-            height,
-          )
-          ..close();
+    final path = Path()
+      // Move to the starting point of the left bracket
+      ..moveTo(centerX - offset, height)
+      // Draw the top lip
+      ..quadraticBezierTo(
+        centerX,
+        height - lipSize,
+        centerX + offset,
+        height,
+      )
+      // Draw the bottom lip
+      ..quadraticBezierTo(
+        centerX,
+        height + lipSize,
+        centerX - offset,
+        height,
+      )
+      ..close();
 
     canvas
       ..drawPath(path, _paintFill)

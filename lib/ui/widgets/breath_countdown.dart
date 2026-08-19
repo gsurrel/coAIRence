@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BreathCountdown extends StatelessWidget {
   const BreathCountdown({
@@ -15,9 +15,8 @@ class BreathCountdown extends StatelessWidget {
     return Center(
       child: AnimatedSwitcher(
         duration: Durations.long1,
-        transitionBuilder:
-            (Widget child, Animation<double> animation) =>
-                FadeTransition(opacity: animation, child: child),
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
         child: FittedBox(
           fit: BoxFit.fitWidth,
           key: ValueKey<int>(getCurrentRepetition()),

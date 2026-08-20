@@ -13,16 +13,14 @@ class BreathPageState {
     required this.allPatterns,
     required this.filterTags,
     required this.patterns,
-    required this.pattern,
-    required this.selectedPatternIndex,
+    required this.selectedPattern,
     required this.showButton,
   });
 
   final List<BreathingPattern> allPatterns;
   final List<PatternTag> filterTags;
   final List<BreathingPattern> patterns;
-  final BreathingPattern pattern;
-  final int selectedPatternIndex;
+  final BreathingPattern selectedPattern;
   final bool showButton;
 
   BreathPageState copyWith({
@@ -30,14 +28,12 @@ class BreathPageState {
     List<PatternTag>? filterTags,
     List<BreathingPattern>? patterns,
     BreathingPattern? pattern,
-    int? selectedPatternIndex,
     bool? showButton,
   }) => BreathPageState(
     allPatterns: allPatterns ?? this.allPatterns,
     filterTags: filterTags ?? this.filterTags,
     patterns: patterns ?? this.patterns,
-    pattern: pattern ?? this.pattern,
-    selectedPatternIndex: selectedPatternIndex ?? this.selectedPatternIndex,
+    selectedPattern: pattern ?? selectedPattern,
     showButton: showButton ?? this.showButton,
   );
 }
@@ -53,12 +49,12 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   @override
   BreathPageState build() {
     final allPatterns = _service.fetchAllPatterns();
+    final selectedPattern = _service.fetchSelectedPattern();
     return BreathPageState(
       allPatterns: allPatterns,
       filterTags: const [],
       patterns: allPatterns,
-      pattern: _service.fetchSelectedPattern(),
-      selectedPatternIndex: _service.selectedPatternIndex,
+      selectedPattern: selectedPattern,
       showButton: true,
     );
   }
@@ -67,24 +63,20 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
     state = state.copyWith(showButton: !state.showButton);
   }
 
-  void updateSelectedPattern(int index) {
-    if (index >= 0 && index < state.patterns.length) {
-      state = state.copyWith(
-        selectedPatternIndex: index,
-        pattern: state.patterns[index],
-      );
-    }
+  /// Select a pattern by identity. Works correctly regardless of current filter.
+  void updateSelectedPattern(BreathingPattern pattern) {
+    state = state.copyWith(pattern: pattern);
   }
 
   void setFilterTags(List<PatternTag> tags) {
     final filtered = tags.isEmpty
         ? state.allPatterns
         : state.allPatterns.where((p) => p.tags.any(tags.contains)).toList();
+
+    // Keep the current selection as-is, even if it's no longer in the filtered list.
     state = state.copyWith(
       filterTags: tags,
       patterns: filtered,
-      selectedPatternIndex: 0,
-      pattern: filtered.isNotEmpty ? filtered.first : state.pattern,
     );
   }
 }

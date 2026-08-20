@@ -41,7 +41,7 @@ class _BreathePageState extends ConsumerState<BreathePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(breathPageProvider);
     final notifier = ref.read(breathPageProvider.notifier);
-    final pattern = state.pattern;
+    final pattern = state.selectedPattern;
     final showButton = state.showButton;
 
     return Scaffold(

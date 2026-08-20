@@ -12,10 +12,10 @@ class HomePage extends ConsumerWidget {
 
   void _navigateToBreathe(WidgetRef ref, BreathingPattern pattern) {
     final patterns = ref.read(breathPageProvider).allPatterns;
-    final index = patterns.indexWhere((p) => p.name == pattern.name);
-    if (index != -1) {
+    final exists = patterns.any((p) => p.name == pattern.name);
+    if (exists) {
       ref.read(breathPageProvider.notifier).setFilterTags(const []);
-      ref.read(breathPageProvider.notifier).updateSelectedPattern(index);
+      ref.read(breathPageProvider.notifier).updateSelectedPattern(pattern);
       ref.read(mainScaffoldTabProvider.notifier).tab = 2;
     }
   }

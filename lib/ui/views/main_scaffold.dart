@@ -3,11 +3,11 @@ import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/viewmodels/main_scaffold_provider.dart';
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
-import 'package:coairence/ui/views/breathes_library.dart';
+import 'package:coairence/ui/views/breathes_library_page.dart';
 import 'package:coairence/ui/views/home_page.dart';
+import 'package:coairence/ui/views/profile_page.dart';
 import 'package:coairence/ui/views/settings_page.dart';
 import 'package:coairence/ui/widgets/pattern_tag_icon.dart';
-import 'package:coairence/ui/widgets/profile_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

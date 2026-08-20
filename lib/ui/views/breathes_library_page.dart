@@ -4,6 +4,8 @@ import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/widgets/pattern_card.dart';
 import 'package:coairence/ui/widgets/pattern_details_sheet.dart';
+import 'package:flutter_reorderable_grid_view/entities/reorderable_animation_config.dart';
+import 'package:flutter_reorderable_grid_view/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -14,33 +16,52 @@ class BreathesLibraryPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(breathPageProvider);
     final patterns = state.patterns;
-    final selectedPatternIndex = state.selectedPatternIndex;
+    final selectedPattern = state.selectedPattern;
 
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 320,
-        childAspectRatio: 0.45,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+    return ReorderableBuilder.builder(
+      key: const ValueKey('breathes_library_grid'),
+      onReorder: (reorderedListFunction) {},
+      enableDraggable: false,
+      animationConfig: const ReorderableAnimationConfig(
+        positionChangeDuration: Duration(milliseconds: 300),
+        fadeInDuration: Duration(milliseconds: 250),
+        defaultAnimationCurve: Curves.easeInOut,
       ),
-      padding: const EdgeInsets.all(16),
       itemCount: patterns.length,
-      itemBuilder: (context, index) {
-        final pattern = patterns[index];
-        final isSelected = index == selectedPatternIndex;
-
-        return PatternCard(
-          pattern: pattern,
-          isSelected: isSelected,
-          onTap: () {
-            ref.read(breathPageProvider.notifier).updateSelectedPattern(index);
-          },
-          onShowDetails: () => _showDetailsBottomSheet(
-            context,
-            ref,
-            pattern,
-            index,
+      childBuilder: (itemBuilder) {
+        return GridView.builder(
+          primary: true,
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 320,
+            childAspectRatio: 0.45,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
           ),
+          itemCount: patterns.length,
+          itemBuilder: (context, index) {
+            final pattern = patterns[index];
+            final isSelected = pattern.name == selectedPattern.name;
+
+            return itemBuilder(
+              PatternCard(
+                key: ValueKey(pattern.name),
+                pattern: pattern,
+                isSelected: isSelected,
+                onTap: () {
+                  ref
+                      .read(breathPageProvider.notifier)
+                      .updateSelectedPattern(pattern);
+                },
+                onShowDetails: () => _showDetailsBottomSheet(
+                  context,
+                  ref,
+                  pattern,
+                ),
+              ),
+              index,
+            );
+          },
         );
       },
     );
@@ -50,7 +71,6 @@ class BreathesLibraryPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     BreathingPattern pattern,
-    int index,
   ) {
     unawaited(
       showModalBottomSheet(
@@ -60,7 +80,9 @@ class BreathesLibraryPage extends ConsumerWidget {
         builder: (context) => PatternDetailsSheet(
           pattern: pattern,
           onUsePattern: () {
-            ref.read(breathPageProvider.notifier).updateSelectedPattern(index);
+            ref
+                .read(breathPageProvider.notifier)
+                .updateSelectedPattern(pattern);
             Navigator.pop(context);
           },
         ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class BreathAnimationController extends StatefulWidget {
   const BreathAnimationController({
@@ -54,6 +55,8 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
 
     _controller = AnimationController(vsync: this, duration: totalDuration);
 
+    unawaited(WakelockPlus.enable());
+
     unawaited(
       _controller.forward().whenComplete(() {
         if (getCurrentRepetition() >= widget.totalRepetitions) {
@@ -66,6 +69,7 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     _controller.dispose();
     super.dispose();
   }

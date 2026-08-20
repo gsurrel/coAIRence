@@ -6,6 +6,8 @@ enum AchievementMetric {
   totalCycles,
   longestStreak,
   distinctPatterns,
+  morningSessions,
+  distinctWeeks,
 }
 
 class AchievementDefinition {
@@ -207,6 +209,24 @@ class AchievementDefinitions {
       metric: AchievementMetric.distinctPatterns,
       target: 7,
       color: Colors.yellow,
+    ),
+    AchievementDefinition(
+      id: 'early_bird',
+      title: 'Early Bird',
+      description: 'Complete 10 sessions before 9 AM.',
+      icon: Icons.wb_twilight,
+      metric: AchievementMetric.morningSessions,
+      target: 10,
+      color: Colors.amberAccent,
+    ),
+    AchievementDefinition(
+      id: 'consistent_practitioner',
+      title: 'Consistent Practitioner',
+      description: 'Practice in 5 different calendar weeks.',
+      icon: Icons.calendar_month,
+      metric: AchievementMetric.distinctWeeks,
+      target: 5,
+      color: Colors.deepPurple,
     ),
   ];
 }

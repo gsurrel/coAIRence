@@ -47,6 +47,8 @@ class ProfileService {
     AchievementMetric.totalCycles => stats.totalCycles,
     AchievementMetric.longestStreak => stats.longestStreak,
     AchievementMetric.distinctPatterns => distinctPatterns,
+    AchievementMetric.morningSessions => stats.morningSessions,
+    AchievementMetric.distinctWeeks => stats.distinctWeeks,
   };
 
   Future<List<AchievementDefinition>> logSession({
@@ -54,11 +56,14 @@ class ProfileService {
     required Duration duration,
     required int cyclesCompleted,
   }) async {
+    final now = DateTime.now();
+
     final session = ExerciseSession(
       patternName: patternName,
-      timestamp: DateTime.now(),
+      timestamp: now,
       durationSeconds: duration.inSeconds,
       cyclesCompleted: cyclesCompleted,
+      localHour: now.hour,
     );
 
     await _repository.insertSession(session);

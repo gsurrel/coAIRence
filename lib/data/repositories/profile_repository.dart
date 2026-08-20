@@ -27,7 +27,7 @@ class ProfileRepository {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -41,6 +41,17 @@ class ProfileRepository {
     if (oldVersion < 2) {
       await _createAchievementsTable(db);
     }
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE sessions ADD COLUMN localHour INTEGER NOT NULL DEFAULT 0',
+      );
+      // Backfill existing rows with their actual local hour
+      await db.execute('''
+        UPDATE sessions SET localHour = CAST(
+          strftime('%H', datetime(timestamp, 'localtime')) AS INTEGER
+        )
+      ''');
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -50,7 +61,9 @@ class ProfileRepository {
         patternName TEXT NOT NULL,
         timestamp TEXT NOT NULL,
         durationSeconds INTEGER NOT NULL,
-        cyclesCompleted INTEGER NOT NULL
+        cyclesCompleted INTEGER NOT NULL,
+        distinctWeeks INTEGER DEFAULT NULL,
+        localHour INTEGER NOT NULL
       )
     ''');
 
@@ -103,7 +116,9 @@ class ProfileRepository {
       SELECT
         COUNT(*) as totalSessions,
         COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
-        COALESCE(SUM(cyclesCompleted), 0) as totalCycles
+        COALESCE(SUM(cyclesCompleted), 0) as totalCycles,
+        SUM(CASE WHEN localHour BETWEEN 5 AND 8 THEN 1 ELSE 0 END) as morningSessions,
+        COUNT(DISTINCT strftime('%Y-W%W', timestamp)) as distinctWeeks
       FROM sessions
     ''');
 

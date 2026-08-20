@@ -1,6 +1,7 @@
-import 'dart:async';
-
-import 'package:coairence/ui/viewmodels/profile_page_provider.dart';
+import 'package:coairence/data/models/achievement.dart';
+import 'package:coairence/data/models/exercise_session.dart';
+import 'package:coairence/data/models/user_stats.dart';
+import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:coairence/ui/widgets/achievement_badge.dart';
 import 'package:coairence/ui/widgets/session_history_item.dart';
 import 'package:coairence/ui/widgets/stat_card.dart';
@@ -13,16 +14,36 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(profilePageProvider);
+    final statsAsync = ref.watch(statsProvider);
+    final historyAsync = ref.watch(sessionsProvider);
+    final achievementsAsync = ref.watch(achievementsProvider);
 
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator.adaptive());
-    }
+    return switch ((statsAsync, historyAsync, achievementsAsync)) {
+      (
+        AsyncData(value: final UserStats stats),
+        AsyncData(value: final List<ExerciseSession> history),
+        AsyncData(value: final List<AchievementProgress> achievements),
+      ) =>
+        _buildContent(
+          context,
+          ref,
+          stats,
+          history,
+          achievements,
+        ),
+      _ => const Center(child: CircularProgressIndicator.adaptive()),
+    };
+  }
 
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    UserStats stats,
+    List<ExerciseSession> history,
+    List<AchievementProgress> achievements,
+  ) {
     final theme = Theme.of(context);
-    final unlockedCount = state.achievements
-        .where((achievement) => achievement.unlocked)
-        .length;
+    final unlockedCount = achievements.where((a) => a.unlocked).length;
 
     return CustomScrollView(
       slivers: [
@@ -46,7 +67,7 @@ class ProfilePage extends ConsumerWidget {
                       child: StatCard(
                         icon: Icons.local_fire_department,
                         label: 'Current Streak',
-                        value: '${state.stats.currentStreak} days',
+                        value: '${stats.currentStreak} days',
                         color: Colors.orange,
                       ),
                     ),
@@ -54,7 +75,7 @@ class ProfilePage extends ConsumerWidget {
                       child: StatCard(
                         icon: Icons.emoji_events,
                         label: 'Longest Streak',
-                        value: '${state.stats.longestStreak} days',
+                        value: '${stats.longestStreak} days',
                         color: Colors.amber,
                       ),
                     ),
@@ -68,7 +89,7 @@ class ProfilePage extends ConsumerWidget {
                       child: StatCard(
                         icon: Icons.self_improvement,
                         label: 'Total Sessions',
-                        value: '${state.stats.totalSessions}',
+                        value: '${stats.totalSessions}',
                         color: theme.colorScheme.primary,
                       ),
                     ),
@@ -76,7 +97,7 @@ class ProfilePage extends ConsumerWidget {
                       child: StatCard(
                         icon: Icons.timer,
                         label: 'Total Minutes',
-                        value: '${state.stats.totalMinutes}',
+                        value: '${stats.totalMinutes}',
                         color: Colors.teal,
                       ),
                     ),
@@ -93,7 +114,7 @@ class ProfilePage extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '$unlockedCount/${state.achievements.length}',
+                      '$unlockedCount/${achievements.length}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.outline,
                       ),
@@ -103,7 +124,7 @@ class ProfilePage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 StretchingWrap(
                   minItemWidth: 84,
-                  children: state.achievements
+                  children: achievements
                       .map(
                         (achievement) =>
                             AchievementBadge(progress: achievement),
@@ -123,10 +144,13 @@ class ProfilePage extends ConsumerWidget {
                     TextButton.icon(
                       icon: const Icon(Icons.delete_outline),
                       label: const Text('Clear'),
-                      onPressed: () {
-                        unawaited(
-                          ref.read(profilePageProvider.notifier).clearAllData(),
-                        );
+                      onPressed: () async {
+                        await ref.read(profileServiceProvider).clearData();
+                        ref
+                          ..invalidate(sessionsProvider)
+                          ..invalidate(statsProvider)
+                          ..invalidate(achievementsProvider)
+                          ..invalidate(mostUsedPatternNameProvider);
                       },
                     ),
                   ],
@@ -135,7 +159,7 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
         ),
-        if (state.history.isEmpty)
+        if (history.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: Center(
@@ -163,10 +187,10 @@ class ProfilePage extends ConsumerWidget {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final session = state.history[index];
+                final session = history[index];
                 return SessionHistoryItem(session: session);
               },
-              childCount: state.history.length,
+              childCount: history.length,
             ),
           ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 100)),

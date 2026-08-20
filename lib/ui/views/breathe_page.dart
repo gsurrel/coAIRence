@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/services/breath_synth_service.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
-import 'package:coairence/ui/viewmodels/profile_page_provider.dart';
+import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breath_pattern_backdrop.dart';
 import 'package:coairence/ui/widgets/breathe_button.dart';
@@ -91,9 +91,12 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                         cyclesCompleted: _repetitions,
                       );
 
-                      unawaited(
-                        ref.read(profilePageProvider.notifier).refresh(),
-                      );
+                      // The database changed. Invalidate the data layer.
+                      ref
+                        ..invalidate(sessionsProvider)
+                        ..invalidate(statsProvider)
+                        ..invalidate(achievementsProvider)
+                        ..invalidate(mostUsedPatternNameProvider);
 
                       if (newlyUnlocked.isNotEmpty) {
                         final message = newlyUnlocked.length == 1
@@ -120,7 +123,6 @@ class _BreathePageState extends ConsumerState<BreathePage> {
   }
 }
 
-/// Everything shown before the exercise starts.
 class _PreStartOverlay extends StatelessWidget {
   const _PreStartOverlay({
     required this.pattern,

@@ -69,7 +69,7 @@ class BreatheRepository {
 
     // ❤️ HEALTH & HRV OPTIMIZATION
     BreathingPattern(
-      name: 'Coherent Breathing (5.5s)',
+      name: 'Coherent Breathing',
       description:
           'The gold standard for maximizing Heart Rate Variability (HRV).',
       tags: [PatternTag.hrv, PatternTag.focus],

@@ -1,18 +1,23 @@
+import 'package:coairence/ui/theme/pattern_tag_style.dart';
+import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
+import 'package:coairence/ui/viewmodels/main_scaffold_provider.dart';
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
 import 'package:coairence/ui/views/breathes_library.dart';
+import 'package:coairence/ui/views/home_page.dart';
 import 'package:coairence/ui/views/settings_page.dart';
 import 'package:coairence/ui/widgets/profile_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-class MainScaffold extends StatefulWidget {
+class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
 
   @override
-  State<MainScaffold> createState() => _MainScaffoldState();
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold>
+class _MainScaffoldState extends ConsumerState<MainScaffold>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 2;
   int _previousIndex = 2;
@@ -22,6 +27,9 @@ class _MainScaffoldState extends State<MainScaffold>
   @override
   void initState() {
     super.initState();
+    final initialTab = ref.read(mainScaffoldTabProvider);
+    _currentIndex = initialTab;
+    _previousIndex = initialTab;
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -61,6 +69,7 @@ class _MainScaffoldState extends State<MainScaffold>
           );
     });
     _animationController.forward(from: 0);
+    ref.read(mainScaffoldTabProvider.notifier).tab = targetIndex;
   }
 
   Tween<Offset> _getEnterTween() {
@@ -80,98 +89,169 @@ class _MainScaffoldState extends State<MainScaffold>
   }
 
   static const List<Widget> _pages = [
-    Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    HomePage(),
     BreathesLibraryPage(),
     BreathePage(),
     ProfilePage(),
     SettingsPage(),
   ];
 
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    if (s.toLowerCase() == 'hrv') return 'HRV';
+    return '${s[0].toUpperCase()}${s.substring(1)}';
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: 'co',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            TextSpan(
-              text: 'AIR',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
-            TextSpan(
-              text: 'ence',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-    body: Stack(
-      children: [
-        AnimatedBackdrop(animation: _animation),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (child, animation) {
-            final isEntering = switch (child.key) {
-              ValueKey<int>(:final int value) => value == _currentIndex,
-              _ => false,
-            };
-            if (isEntering) {
-              final enterTween = _getEnterTween();
-              return SlideTransition(
-                position: animation.drive(
-                  enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+  Widget build(BuildContext context) {
+    ref.listen<int>(mainScaffoldTabProvider, (previous, next) {
+      if (next != _currentIndex) {
+        setState(() {
+          _previousIndex = _currentIndex;
+          _currentIndex = next;
+          _animation =
+              Tween<double>(
+                begin: _previousIndex.toDouble(),
+                end: _currentIndex.toDouble(),
+              ).animate(
+                CurvedAnimation(
+                  parent: _animationController,
+                  curve: Curves.easeInOut,
                 ),
-                child: child,
               );
-            } else {
-              final exitTween = _getExitTween();
-              return SlideTransition(
-                position: animation.drive(
-                  exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+        });
+        _animationController.forward(from: 0);
+      }
+    });
+
+    final currentTab = ref.watch(mainScaffoldTabProvider);
+    final filterTags = ref.watch(
+      breathPageProvider.select((s) => s.filterTags),
+    );
+    final showFilterBadge = currentTab == 1 && filterTags.isNotEmpty;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'co',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  fontWeight: FontWeight.bold,
                 ),
-                child: child,
-              );
-            }
-          },
-          child: Container(
-            key: ValueKey<int>(_currentIndex),
-            child: _pages.elementAtOrNull(_currentIndex) ?? const BreathePage(),
+              ),
+              TextSpan(
+                text: 'AIR',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+              TextSpan(
+                text: 'ence',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-    bottomNavigationBar: BottomNavigationBar(
-      currentIndex: _currentIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: _onItemTapped,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.air),
-          label: 'Patterns',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.play_circle_fill),
-          label: 'Breathe',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-      ],
-    ),
-  );
+        actions: [
+          if (showFilterBadge)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ActionChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 4,
+                  children: [
+                    Icon(
+                      filterTags.first.icon,
+                      size: 16,
+                      color: filterTags.first.onColor(
+                        Theme.of(context).colorScheme,
+                      ),
+                    ),
+                    Text(
+                      _capitalize(filterTags.first.name),
+                      style: TextStyle(
+                        color: filterTags.first.onColor(
+                          Theme.of(context).colorScheme,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.close, size: 16),
+                  ],
+                ),
+                backgroundColor: filterTags.first.color(
+                  Theme.of(context).colorScheme,
+                ),
+                onPressed: () {
+                  ref.read(breathPageProvider.notifier).setFilterTags(const []);
+                },
+              ),
+            ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          AnimatedBackdrop(animation: _animation),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, animation) {
+              final isEntering = switch (child.key) {
+                ValueKey<int>(:final int value) => value == _currentIndex,
+                _ => false,
+              };
+              if (isEntering) {
+                final enterTween = _getEnterTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              } else {
+                final exitTween = _getExitTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              }
+            },
+            child: Container(
+              key: ValueKey<int>(_currentIndex),
+              child:
+                  _pages.elementAtOrNull(_currentIndex) ?? const BreathePage(),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentTab,
+        type: BottomNavigationBarType.fixed,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.air), label: 'Patterns'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle_fill),
+            label: 'Breathe',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
 }

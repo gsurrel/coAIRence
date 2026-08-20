@@ -67,11 +67,9 @@ class _BreathAnimationControllerState
     if (widget.audioEnabled) {
       unawaited(WakelockPlus.enable());
       _synth = ref.read(breathSynthServiceProvider);
+
       // Synth should already be started by the page — we just verify
-      if (_synth != null) {
-        // If not active for some reason, start it
-        unawaited(_synth!.start());
-      }
+      if (_synth case final BreathSynthService synth) unawaited(synth.start());
     }
 
     _controller.addListener(_onTick);
@@ -88,18 +86,18 @@ class _BreathAnimationControllerState
   }
 
   void _onTick() {
-    if (_synth == null) return;
+    if (_synth case final BreathSynthService synth) {
+      final breathPct = getCurrentBreathPercentage();
+      final progress = getCycleProgress();
+      final phase = _detectPhase(progress);
 
-    final breathPct = getCurrentBreathPercentage();
-    final progress = getCycleProgress();
-    final phase = _detectPhase(progress);
+      synth.update(breathPct, phase);
 
-    _synth!.update(breathPct, phase);
-
-    if (phase != _lastPhase && phase != BreathPhase.idle) {
-      unawaited(_synth!.triggerHaptic(phase));
+      if (phase != _lastPhase && phase != BreathPhase.idle) {
+        unawaited(synth.triggerHaptic(phase));
+      }
+      _lastPhase = phase;
     }
-    _lastPhase = phase;
   }
 
   BreathPhase _detectPhase(double progress) {

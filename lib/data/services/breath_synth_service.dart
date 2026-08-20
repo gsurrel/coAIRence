@@ -110,9 +110,9 @@ class BreathSynthService {
     _melodySource = await _soloud.loadWaveform(WaveForm.triangle, true, 1, 0);
     if (_melodySource != null) {
       _soloud.setWaveformSuperWave(
-      _melodySource!,
-      true,
-    );
+        _melodySource!,
+        true,
+      );
       _soloud.setWaveformDetune(_melodySource!, 0.4);
       _soloud.setWaveformFreq(_melodySource!, _melodyMin);
     }

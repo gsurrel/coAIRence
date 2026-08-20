@@ -24,6 +24,8 @@ class BreathPageState {
   final BreathingPattern selectedPattern;
   final bool showButton;
 
+  bool get isExercising => !showButton;
+
   BreathPageState copyWith({
     List<BreathingPattern>? allPatterns,
     List<PatternTag>? filterTags,

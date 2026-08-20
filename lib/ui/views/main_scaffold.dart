@@ -19,11 +19,14 @@ class MainScaffold extends ConsumerStatefulWidget {
 }
 
 class _MainScaffoldState extends ConsumerState<MainScaffold>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _currentIndex = 0;
   int _previousIndex = 0;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+
+  late AnimationController _pageAnimationController;
+  late Animation<double> _pageAnimation;
+  late AnimationController _navHideController;
+  late Animation<double> _navHideAnimation;
 
   @override
   void initState() {
@@ -31,25 +34,36 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     final initialTab = ref.read(mainScaffoldTabProvider);
     _currentIndex = initialTab;
     _previousIndex = initialTab;
-    _animationController = AnimationController(
+    _pageAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _animation =
+    _pageAnimation =
         Tween<double>(
           begin: _previousIndex.toDouble(),
           end: _currentIndex.toDouble(),
         ).animate(
           CurvedAnimation(
-            parent: _animationController,
+            parent: _pageAnimationController,
             curve: Curves.easeInOut,
           ),
         );
+
+    _navHideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+      value: 1,
+    );
+    _navHideAnimation = CurvedAnimation(
+      parent: _navHideController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _navHideController.dispose();
+    _pageAnimationController.dispose();
     super.dispose();
   }
 
@@ -58,18 +72,18 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = targetIndex;
-      _animation =
+      _pageAnimation =
           Tween<double>(
             begin: _previousIndex.toDouble(),
             end: _currentIndex.toDouble(),
           ).animate(
             CurvedAnimation(
-              parent: _animationController,
+              parent: _pageAnimationController,
               curve: Curves.easeInOut,
             ),
           );
     });
-    _animationController.forward(from: 0);
+    _pageAnimationController.forward(from: 0);
     ref.read(mainScaffoldTabProvider.notifier).tab = targetIndex;
   }
 
@@ -104,20 +118,31 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
         setState(() {
           _previousIndex = _currentIndex;
           _currentIndex = next;
-          _animation =
+          _pageAnimation =
               Tween<double>(
                 begin: _previousIndex.toDouble(),
                 end: _currentIndex.toDouble(),
               ).animate(
                 CurvedAnimation(
-                  parent: _animationController,
+                  parent: _pageAnimationController,
                   curve: Curves.easeInOut,
                 ),
               );
         });
-        _animationController.forward(from: 0);
+        _pageAnimationController.forward(from: 0);
       }
     });
+
+    ref.listen<bool>(
+      breathPageProvider.select((s) => s.isExercising),
+      (previous, next) {
+        if (next) {
+          _navHideController.reverse(); // Hide
+        } else {
+          _navHideController.forward(); // Show
+        }
+      },
+    );
 
     final currentTab = ref.watch(mainScaffoldTabProvider);
     final filterTags = ref.watch(
@@ -168,7 +193,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
                     for (final tag in PatternTag.values)
                       if (activeFilter == null || activeFilter == tag)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 2,
+                          ),
                           child: PatternTagIcon(
                             tag,
                             expanded: activeFilter == tag,
@@ -187,61 +214,72 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          AnimatedBackdrop(animation: _animation),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeInOut,
-            switchOutCurve: Curves.easeInOut,
-            transitionBuilder: (child, animation) {
-              final isEntering = switch (child.key) {
-                ValueKey<int>(:final int value) => value == _currentIndex,
-                _ => false,
-              };
-              if (isEntering) {
-                final enterTween = _getEnterTween();
-                return SlideTransition(
-                  position: animation.drive(
-                    enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                  ),
-                  child: child,
-                );
-              } else {
-                final exitTween = _getExitTween();
-                return SlideTransition(
-                  position: animation.drive(
-                    exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                  ),
-                  child: child,
-                );
-              }
-            },
-            child: Container(
-              key: ValueKey<int>(_currentIndex),
-              child:
-                  _pages.elementAtOrNull(_currentIndex) ?? const BreathePage(),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            AnimatedBackdrop(animation: _pageAnimation),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              transitionBuilder: (child, animation) {
+                final isEntering = switch (child.key) {
+                  ValueKey<int>(:final int value) => value == _currentIndex,
+                  _ => false,
+                };
+                if (isEntering) {
+                  final enterTween = _getEnterTween();
+                  return SlideTransition(
+                    position: animation.drive(
+                      enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                    ),
+                    child: child,
+                  );
+                } else {
+                  final exitTween = _getExitTween();
+                  return SlideTransition(
+                    position: animation.drive(
+                      exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                    ),
+                    child: child,
+                  );
+                }
+              },
+              child: Container(
+                key: ValueKey<int>(_currentIndex),
+                child:
+                    _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTab,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.air), label: 'Patterns'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_fill),
-            label: 'Breathe',
+      bottomNavigationBar: SizeTransition(
+        sizeFactor: Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(
+            parent: _navHideAnimation,
+            curve: Curves.easeInOut,
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+        ),
+        alignment: AlignmentGeometry.bottomCenter,
+        child: BottomNavigationBar(
+          currentIndex: currentTab,
+          type: BottomNavigationBarType.fixed,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.air), label: 'Patterns'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle_fill),
+              label: 'Breathe',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }

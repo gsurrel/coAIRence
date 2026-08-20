@@ -70,14 +70,16 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                     totalRepetitions: _repetitions,
                     speedMultiplier: _speedMultiplier,
                     onExerciseCompleted: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+
                       await _synth?.stop();
 
-                      // Log session to profile
                       final profileService = ref.read(profileServiceProvider);
                       final safeSpeed = _speedMultiplier > 0
                           ? _speedMultiplier
                           : 1.0;
-                      await profileService.logSession(
+
+                      final newlyUnlocked = await profileService.logSession(
                         patternName: pattern.name,
                         duration: Duration(
                           milliseconds:
@@ -88,9 +90,25 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                         ),
                         cyclesCompleted: _repetitions,
                       );
+
                       unawaited(
                         ref.read(profilePageProvider.notifier).refresh(),
                       );
+
+                      if (newlyUnlocked.isNotEmpty) {
+                        final message = newlyUnlocked.length == 1
+                            ? 'Achievement unlocked: ${newlyUnlocked.first.title}'
+                            : '${newlyUnlocked.length} achievements unlocked: '
+                                  '${newlyUnlocked.map((achievement) => achievement.title).join(', ')}';
+
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
 
                       notifier.toggleShowButton();
                     },
@@ -130,16 +148,15 @@ class _PreStartOverlay extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 24,
               children: [
                 PatternInfoPanel(pattern: pattern),
-                const SizedBox(height: 24),
                 ExerciseConfigControls(
                   repetitions: repetitions,
                   onRepetitionsChanged: onRepetitionsChanged,
                   speedMultiplier: speedMultiplier,
                   onSpeedMultiplierChanged: onSpeedMultiplierChanged,
                 ),
-                const SizedBox(height: 24),
                 BreatheButton(onPressed: onStart),
               ],
             ),

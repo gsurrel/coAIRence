@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/exercise_session.dart';
 import 'package:coairence/data/models/user_stats.dart';
 import 'package:coairence/data/repositories/profile_repository.dart';
@@ -14,20 +15,24 @@ class ProfilePageState {
   const ProfilePageState({
     this.stats = const UserStats(),
     this.history = const [],
+    this.achievements = const [],
     this.isLoading = true,
   });
 
   final UserStats stats;
   final List<ExerciseSession> history;
+  final List<AchievementProgress> achievements;
   final bool isLoading;
 
   ProfilePageState copyWith({
     UserStats? stats,
     List<ExerciseSession>? history,
+    List<AchievementProgress>? achievements,
     bool? isLoading,
   }) => ProfilePageState(
     stats: stats ?? this.stats,
     history: history ?? this.history,
+    achievements: achievements ?? this.achievements,
     isLoading: isLoading ?? this.isLoading,
   );
 }
@@ -49,13 +54,21 @@ class ProfilePageNotifier extends Notifier<ProfilePageState> {
   Future<void> _loadData() async {
     final stats = await _service.getStats();
     final history = await _service.getHistory();
-    state = state.copyWith(stats: stats, history: history, isLoading: false);
+    final achievements = await _service.getAchievements();
+
+    state = state.copyWith(
+      stats: stats,
+      history: history,
+      achievements: achievements,
+      isLoading: false,
+    );
   }
 
   Future<void> refresh() => _loadData();
 
   Future<void> clearAllData() async {
+    state = state.copyWith(isLoading: true);
     await _service.clearData();
-    state = const ProfilePageState(isLoading: false);
+    await _loadData();
   }
 }

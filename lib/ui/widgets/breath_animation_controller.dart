@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:coairence/data/models/breath_step.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -26,6 +27,7 @@ class BreathAnimationController extends StatefulWidget {
     double Function() getCycleProgress,
     double Function() getCurrentBreathPercentage,
     int Function() getCurrentRepetition,
+    BreathMode Function() getCurrentBreathMode,
   )
   child;
 
@@ -83,6 +85,9 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
   int getCurrentRepetition() =>
       (_controller.value * widget.totalRepetitions).floor() + 1;
 
+  BreathMode getCurrentBreathMode() =>
+      widget.pattern.getBreathMode(getCycleProgress());
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -93,6 +98,7 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
           getCycleProgress,
           getCurrentBreathPercentage,
           getCurrentRepetition,
+          getCurrentBreathMode,
         );
       },
     );

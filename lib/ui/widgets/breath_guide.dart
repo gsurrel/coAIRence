@@ -37,24 +37,24 @@ class BreathGuide extends StatelessWidget {
                 getCycleProgress,
                 getCurrentBreathPercentage,
                 getCurrentRepetition,
-              ) {
-                return Stack(
-                  children: [
-                    // The active animation on top.
-                    RepaintBoundary(
-                      child: BreathCurve(
-                        cycleProgress: getCycleProgress(),
-                        breathPercent: getCurrentBreathPercentage(),
-                      ),
+                getCurrentBreathMode,
+              ) => Stack(
+                children: [
+                  // The active animation on top.
+                  RepaintBoundary(
+                    child: BreathCurve(
+                      cycleProgress: getCycleProgress(),
+                      breathPercent: getCurrentBreathPercentage(),
+                      mode: getCurrentBreathMode(),
                     ),
-                    // Countdown text.
-                    BreathCountdown(
-                      totalRepetitions: totalRepetitions,
-                      getCurrentRepetition: getCurrentRepetition,
-                    ),
-                  ],
-                );
-              },
+                  ),
+                  // Countdown text.
+                  BreathCountdown(
+                    totalRepetitions: totalRepetitions,
+                    getCurrentRepetition: getCurrentRepetition,
+                  ),
+                ],
+              ),
         ),
       ],
     );

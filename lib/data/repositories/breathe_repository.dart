@@ -1,3 +1,4 @@
+import 'package:coairence/data/models/breath_step.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -10,10 +11,10 @@ class BreatheRepository {
       tags: [PatternTag.calming],
       icon: Icons.crop_square,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 4)),
       ],
     ),
     BreathingPattern(
@@ -22,9 +23,9 @@ class BreatheRepository {
       tags: [PatternTag.calming],
       icon: Icons.change_history,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 4)),
       ],
     ),
     BreathingPattern(
@@ -34,9 +35,9 @@ class BreatheRepository {
       icon: Icons.cloud,
       difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 1.0, duration: const Duration(seconds: 7)),
-        (breathTo: 0.0, duration: const Duration(seconds: 8)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 7)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 8)),
       ],
     ),
 
@@ -47,8 +48,8 @@ class BreatheRepository {
       tags: [PatternTag.sleep],
       icon: Icons.nightlight_round,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 8)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 8)),
       ],
     ),
     BreathingPattern(
@@ -57,8 +58,12 @@ class BreatheRepository {
           'Keeps airways open longer. Recommended for shortness of breath.',
       tags: [PatternTag.calming],
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 6)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 4)),
+        BreathStep(
+          breathTo: 0,
+          duration: const Duration(seconds: 6),
+          mode: BreathMode.mouth,
+        ),
       ],
     ),
 
@@ -71,8 +76,14 @@ class BreatheRepository {
       icon: Icons.favorite_border,
       difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(milliseconds: 5500)),
-        (breathTo: 0.0, duration: const Duration(milliseconds: 5500)),
+        BreathStep(
+          breathTo: 1,
+          duration: const Duration(milliseconds: 5500),
+        ),
+        BreathStep(
+          breathTo: 0,
+          duration: const Duration(milliseconds: 5500),
+        ),
       ],
     ),
     BreathingPattern(
@@ -82,8 +93,8 @@ class BreatheRepository {
       icon: Icons.monitor_heart,
       difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 6)),
-        (breathTo: 0.0, duration: const Duration(seconds: 6)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 6)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 6)),
       ],
     ),
     BreathingPattern(
@@ -93,9 +104,13 @@ class BreatheRepository {
       icon: Icons.bolt,
       difficulty: 3,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 3)),
-        (breathTo: 1.0, duration: const Duration(seconds: 1)),
-        (breathTo: 0.0, duration: const Duration(seconds: 8)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 3)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 1)),
+        BreathStep(
+          breathTo: 0,
+          duration: const Duration(seconds: 8),
+          mode: BreathMode.mouth,
+        ),
       ],
     ),
 
@@ -108,8 +123,8 @@ class BreatheRepository {
       icon: Icons.flash_on,
       difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 2)),
-        (breathTo: 0.0, duration: const Duration(seconds: 2)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 2)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 2)),
       ],
     ),
     BreathingPattern(
@@ -120,23 +135,39 @@ class BreatheRepository {
       icon: Icons.psychology,
       difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 5)),
-        (breathTo: 1.0, duration: const Duration(seconds: 2)),
-        (breathTo: 0.0, duration: const Duration(seconds: 5)),
-        (breathTo: 0.0, duration: const Duration(seconds: 2)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 5)),
+        BreathStep(breathTo: 1, duration: const Duration(seconds: 2)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 5)),
+        BreathStep(breathTo: 0, duration: const Duration(seconds: 2)),
       ],
     ),
     BreathingPattern(
       name: 'Alternate Nostril Breathing',
-      description: 'Yogic Nadi Shodhana. Follow UI prompts to switch nostrils for calm focus.',
+      description: 'Yogic Nadi Shodhana. Inhale left, exhale right, inhale right, exhale left.',
       tags: [PatternTag.focus, PatternTag.calming],
       icon: Icons.swap_horiz,
       difficulty: 3,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 1.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 4)),
-        (breathTo: 0.0, duration: const Duration(seconds: 4)),
+        BreathStep(
+          breathTo: 1,
+          duration: const Duration(seconds: 4),
+          mode: BreathMode.noseLeft,
+        ),
+        BreathStep(
+          breathTo: 0,
+          duration: const Duration(seconds: 4),
+          mode: BreathMode.noseRight,
+        ),
+        BreathStep(
+          breathTo: 1,
+          duration: const Duration(seconds: 4),
+          mode: BreathMode.noseRight,
+        ),
+        BreathStep(
+          breathTo: 0,
+          duration: const Duration(seconds: 4),
+          mode: BreathMode.noseLeft,
+        ),
       ],
     ),
   ];

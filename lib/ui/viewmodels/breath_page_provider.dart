@@ -1,11 +1,12 @@
+import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
-import 'package:coairence/data/repositories/breathe_repository.dart';
 import 'package:coairence/data/services/breathe_service.dart';
+import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:coairence/ui/viewmodels/home_page_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final breatheServiceProvider = Provider<BreatheService>(
-  (ref) => BreatheService(BreatheRepository()),
+  (ref) => BreatheService(ref.watch(breatheRepositoryProvider)),
 );
 
 /// Immutable snapshot of the breathe page's state.
@@ -16,6 +17,8 @@ class BreathPageState {
     required this.patterns,
     required this.selectedPattern,
     required this.showButton,
+    required this.repetitions,
+    required this.speedMultiplier,
   });
 
   final List<BreathingPattern> allPatterns;
@@ -23,6 +26,12 @@ class BreathPageState {
   final List<BreathingPattern> patterns;
   final BreathingPattern selectedPattern;
   final bool showButton;
+
+  /// How many cycles the next/current exercise should run for.
+  final int repetitions;
+
+  /// Playback-speed multiplier applied to the pattern's step durations.
+  final double speedMultiplier;
 
   bool get isExercising => !showButton;
 
@@ -32,12 +41,16 @@ class BreathPageState {
     List<BreathingPattern>? patterns,
     BreathingPattern? pattern,
     bool? showButton,
+    int? repetitions,
+    double? speedMultiplier,
   }) => BreathPageState(
     allPatterns: allPatterns ?? this.allPatterns,
     filterTags: filterTags ?? this.filterTags,
     patterns: patterns ?? this.patterns,
     selectedPattern: pattern ?? selectedPattern,
     showButton: showButton ?? this.showButton,
+    repetitions: repetitions ?? this.repetitions,
+    speedMultiplier: speedMultiplier ?? this.speedMultiplier,
   );
 }
 
@@ -69,6 +82,8 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
       patterns: allPatterns,
       selectedPattern: initialPattern,
       showButton: true,
+      repetitions: 5,
+      speedMultiplier: 1,
     );
   }
 
@@ -91,5 +106,40 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
       filterTags: tags,
       patterns: filtered,
     );
+  }
+
+  void setRepetitions(int value) {
+    state = state.copyWith(repetitions: value);
+  }
+
+  void setSpeedMultiplier(double value) {
+    state = state.copyWith(speedMultiplier: value);
+  }
+
+  /// Logs the just-finished exercise, refreshes derived profile data, and
+  /// hides the exercise view.
+  ///
+  /// Returns any achievements newly unlocked by this session, so the caller
+  /// can show a notification.
+  Future<List<AchievementDefinition>> completeExercise() async {
+    final pattern = state.selectedPattern;
+    final repetitions = state.repetitions;
+    final safeSpeed = state.speedMultiplier > 0 ? state.speedMultiplier : 1.0;
+
+    final profileService = ref.read(profileServiceProvider);
+    final newlyUnlocked = await profileService.logSession(
+      patternName: pattern.name,
+      duration: Duration(
+        milliseconds:
+            (pattern.totalDuration.inMilliseconds * repetitions / safeSpeed)
+                .round(),
+      ),
+      cyclesCompleted: repetitions,
+    );
+
+    ref.invalidateProfileData();
+    toggleShowButton();
+
+    return newlyUnlocked;
   }
 }

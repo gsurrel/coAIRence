@@ -35,3 +35,18 @@ final achievementsProvider = FutureProvider<List<AchievementProgress>>((
 final mostUsedPatternNameProvider = FutureProvider<String?>((ref) async {
   return ref.watch(profileServiceProvider).getMostUsedPatternName();
 });
+
+/// Invalidates every provider derived from session/profile data.
+///
+/// Call this after any write that changes sessions, stats, or achievements
+/// (logging a session, clearing history, etc.) so the UI reflects the new
+/// state. Centralized here so the four providers can't drift out of sync
+/// across call sites.
+extension ProfileDataInvalidation on Ref {
+  void invalidateProfileData() {
+    invalidate(sessionsProvider);
+    invalidate(statsProvider);
+    invalidate(achievementsProvider);
+    invalidate(mostUsedPatternNameProvider);
+  }
+}

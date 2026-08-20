@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/services/breath_synth_service.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
+import 'package:coairence/ui/viewmodels/profile_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breath_pattern_backdrop.dart';
 import 'package:coairence/ui/widgets/breathe_button.dart';
@@ -70,6 +71,27 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                     speedMultiplier: _speedMultiplier,
                     onExerciseCompleted: () async {
                       await _synth?.stop();
+
+                      // Log session to profile
+                      final profileService = ref.read(profileServiceProvider);
+                      final safeSpeed = _speedMultiplier > 0
+                          ? _speedMultiplier
+                          : 1.0;
+                      await profileService.logSession(
+                        patternName: pattern.name,
+                        duration: Duration(
+                          milliseconds:
+                              (pattern.totalDuration.inMilliseconds *
+                                      _repetitions /
+                                      safeSpeed)
+                                  .round(),
+                        ),
+                        cyclesCompleted: _repetitions,
+                      );
+                      unawaited(
+                        ref.read(profilePageProvider.notifier).refresh(),
+                      );
+
                       notifier.toggleShowButton();
                     },
                   ),

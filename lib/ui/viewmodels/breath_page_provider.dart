@@ -1,6 +1,7 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/repositories/breathe_repository.dart';
 import 'package:coairence/data/services/breathe_service.dart';
+import 'package:coairence/ui/viewmodels/home_page_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final breatheServiceProvider = Provider<BreatheService>(
@@ -49,12 +50,21 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   @override
   BreathPageState build() {
     final allPatterns = _service.fetchAllPatterns();
-    final selectedPattern = _service.fetchSelectedPattern();
+
+    // Use the last exercised pattern from homePageProvider as initial selection.
+    // Fall back to first pattern if no exercise history exists.
+    final lastPattern = ref.watch(homePageProvider).lastPattern;
+    final initialPattern =
+        lastPattern != null &&
+            allPatterns.any((p) => p.name == lastPattern.name)
+        ? lastPattern
+        : allPatterns.first;
+
     return BreathPageState(
       allPatterns: allPatterns,
       filterTags: const [],
       patterns: allPatterns,
-      selectedPattern: selectedPattern,
+      selectedPattern: initialPattern,
       showButton: true,
     );
   }

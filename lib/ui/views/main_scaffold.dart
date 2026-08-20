@@ -20,8 +20,8 @@ class MainScaffold extends ConsumerStatefulWidget {
 
 class _MainScaffoldState extends ConsumerState<MainScaffold>
     with SingleTickerProviderStateMixin {
-  int _currentIndex = 2;
-  int _previousIndex = 2;
+  int _currentIndex = 0;
+  int _previousIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _animation;
 

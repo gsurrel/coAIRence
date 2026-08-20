@@ -6,7 +6,7 @@ final mainScaffoldTabProvider = NotifierProvider<MainScaffoldTabNotifier, int>(
 
 class MainScaffoldTabNotifier extends Notifier<int> {
   @override
-  int build() => 2; // Default to Breathe tab
+  int build() => 0; // Default to Home tab
 
   set tab(int index) => state = index;
   int get tab => state;

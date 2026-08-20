@@ -1,4 +1,4 @@
-import 'package:coairence/ui/theme/pattern_tag_style.dart';
+import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/viewmodels/main_scaffold_provider.dart';
 import 'package:coairence/ui/views/animated_backdrop.dart';
@@ -6,6 +6,7 @@ import 'package:coairence/ui/views/breathe_page.dart';
 import 'package:coairence/ui/views/breathes_library.dart';
 import 'package:coairence/ui/views/home_page.dart';
 import 'package:coairence/ui/views/settings_page.dart';
+import 'package:coairence/ui/widgets/pattern_tag_icon.dart';
 import 'package:coairence/ui/widgets/profile_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -96,12 +97,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     SettingsPage(),
   ];
 
-  String _capitalize(String s) {
-    if (s.isEmpty) return s;
-    if (s.toLowerCase() == 'hrv') return 'HRV';
-    return '${s[0].toUpperCase()}${s.substring(1)}';
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.listen<int>(mainScaffoldTabProvider, (previous, next) {
@@ -128,7 +123,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     final filterTags = ref.watch(
       breathPageProvider.select((s) => s.filterTags),
     );
-    final showFilterBadge = currentTab == 1 && filterTags.isNotEmpty;
+    final activeFilter = filterTags.isNotEmpty ? filterTags.first : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -160,38 +155,34 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
           ),
         ),
         actions: [
-          if (showFilterBadge)
+          if (currentTab == 1)
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: ActionChip(
-                label: Row(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                alignment: Alignment.centerRight,
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  spacing: 4,
                   children: [
-                    Icon(
-                      filterTags.first.icon,
-                      size: 16,
-                      color: filterTags.first.onColor(
-                        Theme.of(context).colorScheme,
-                      ),
-                    ),
-                    Text(
-                      _capitalize(filterTags.first.name),
-                      style: TextStyle(
-                        color: filterTags.first.onColor(
-                          Theme.of(context).colorScheme,
+                    for (final tag in PatternTag.values)
+                      if (activeFilter == null || activeFilter == tag)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: PatternTagIcon(
+                            tag,
+                            expanded: activeFilter == tag,
+                            onTap: activeFilter == tag
+                                ? () => ref
+                                      .read(breathPageProvider.notifier)
+                                      .setFilterTags(const [])
+                                : () => ref
+                                      .read(breathPageProvider.notifier)
+                                      .setFilterTags([tag]),
+                          ),
                         ),
-                      ),
-                    ),
-                    const Icon(Icons.close, size: 16),
                   ],
                 ),
-                backgroundColor: filterTags.first.color(
-                  Theme.of(context).colorScheme,
-                ),
-                onPressed: () {
-                  ref.read(breathPageProvider.notifier).setFilterTags(const []);
-                },
               ),
             ),
         ],

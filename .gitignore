@@ -52,3 +52,5 @@ linux/
 macos/
 web/
 windows/
+# Widget Preview related
+.widget_preview/

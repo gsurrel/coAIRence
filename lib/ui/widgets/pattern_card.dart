@@ -47,11 +47,7 @@ class PatternCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardHeader(
-                pattern: pattern,
-                onShowDetails: onShowDetails,
-                context: context,
-              ),
+              _CardHeader(pattern: pattern, onShowDetails: onShowDetails),
               const SizedBox(height: 12),
               Expanded(
                 child: Center(
@@ -63,7 +59,7 @@ class PatternCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _CardFooter(pattern: pattern, context: context),
+              _CardFooter(pattern: pattern),
             ],
           ),
         ),
@@ -73,13 +69,9 @@ class PatternCard extends StatelessWidget {
 }
 
 class _CardFooter extends StatelessWidget {
-  const new({
-    required this.pattern,
-    required this.context,
-  });
+  const _CardFooter({required this.pattern});
 
   final BreathingPattern pattern;
-  final BuildContext context;
 
   @override
   Widget build(BuildContext context) {
@@ -124,15 +116,10 @@ class _CardFooter extends StatelessWidget {
 }
 
 class _CardHeader extends StatelessWidget {
-  const new({
-    required this.pattern,
-    required this.onShowDetails,
-    required this.context,
-  });
+  const _CardHeader({required this.pattern, required this.onShowDetails});
 
   final BreathingPattern pattern;
   final VoidCallback onShowDetails;
-  final BuildContext context;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +128,7 @@ class _CardHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Icon(pattern.icon, color: theme.colorScheme.primary, size: 24),
-        _DifficultyIndicator(pattern: pattern, context: context),
+        _DifficultyIndicator(pattern: pattern),
         IconButton(
           icon: const Icon(Icons.info_outline),
           onPressed: onShowDetails,
@@ -159,13 +146,9 @@ class _CardHeader extends StatelessWidget {
 }
 
 class _DifficultyIndicator extends StatelessWidget {
-  const new({
-    required this.pattern,
-    required this.context,
-  });
+  const _DifficultyIndicator({required this.pattern});
 
   final BreathingPattern pattern;
-  final BuildContext context;
 
   @override
   Widget build(BuildContext context) {

@@ -54,6 +54,7 @@ class PatternCard extends StatelessWidget {
                   child: BreathGuide(
                     pattern: pattern,
                     totalRepetitions: 1,
+                    isPreview: true,
                     onExerciseCompleted: () {},
                   ),
                 ),

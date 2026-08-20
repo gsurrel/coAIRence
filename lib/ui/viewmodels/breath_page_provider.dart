@@ -51,9 +51,10 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   BreathPageState build() {
     final allPatterns = _service.fetchAllPatterns();
 
-    // Use the last exercised pattern from homePageProvider as initial selection.
-    // Fall back to first pattern if no exercise history exists.
-    final lastPattern = ref.watch(homePageProvider).lastPattern;
+    // Safely extract lastPattern from the AsyncValue.
+    // Returns null if still loading, errored, or genuinely no last pattern.
+    final lastPattern = ref.watch(homePageProvider).value?.lastPattern;
+
     final initialPattern =
         lastPattern != null &&
             allPatterns.any((p) => p.name == lastPattern.name)

@@ -1,8 +1,13 @@
 import 'package:coairence/data/models/exercise_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 class ProfileRepository {
+  /// Set to true during development to simulate slow DB/network.
+  // ignore: no_literal_bool_comparisons
+  static const bool _simulateSlowLoad = kDebugMode && true;
+
   Database? _database;
 
   Future<Database> get database async {
@@ -80,6 +85,9 @@ class ProfileRepository {
   }
 
   Future<List<ExerciseSession>> getRecentSessions({int limit = 50}) async {
+    if (_simulateSlowLoad) {
+      await Future<Null>.delayed(const Duration(seconds: 1));
+    }
     final db = await database;
     final maps = await db.rawQuery(
       'SELECT * FROM sessions ORDER BY timestamp DESC LIMIT ?',

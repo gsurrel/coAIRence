@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomePageState {
   const HomePageState({
-    this.lastPattern,
-    this.mostUsedPattern,
-    this.suggestedPattern,
+    required this.lastPattern,
+    required this.mostUsedPattern,
+    required this.suggestedPattern,
   });
 
   final BreathingPattern? lastPattern;
@@ -14,32 +14,21 @@ class HomePageState {
   final BreathingPattern? suggestedPattern;
 }
 
-final homePageProvider = Provider<HomePageState>((ref) {
+final homePageProvider = FutureProvider<HomePageState>((ref) async {
+  // Await all async dependencies so loading/error propagates correctly
+  final sessions = await ref.watch(sessionsProvider.future);
+  final mostUsedName = await ref.watch(mostUsedPatternNameProvider.future);
   final patterns = ref.watch(breatheRepositoryProvider).patterns;
 
-  final lastPattern = ref
-      .watch(sessionsProvider)
-      .maybeWhen(
-        data: (sessions) {
-          if (sessions.isEmpty) return null;
-          return patterns
-              .where((p) => p.name == sessions.first.patternName)
-              .firstOrNull;
-        },
-        orElse: () => null,
-      );
+  final lastPattern = sessions.isEmpty
+      ? null
+      : patterns.where((p) => p.name == sessions.first.patternName).firstOrNull;
 
-  final mostUsedPattern = ref
-      .watch(mostUsedPatternNameProvider)
-      .maybeWhen(
-        data: (name) {
-          if (name == null) return null;
-          final pattern = patterns.where((p) => p.name == name).firstOrNull;
-          // Deduplicate: don't show if same as last
-          return pattern != lastPattern ? pattern : null;
-        },
-        orElse: () => null,
-      );
+  final mostUsedPattern = () {
+    if (mostUsedName == null) return null;
+    final pattern = patterns.where((p) => p.name == mostUsedName).firstOrNull;
+    return pattern != lastPattern ? pattern : null;
+  }();
 
   final suggestedPattern = () {
     final candidate = switch (DateTime.now().hour) {

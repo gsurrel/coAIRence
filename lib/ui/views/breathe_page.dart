@@ -71,16 +71,25 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                       final newlyUnlocked = await notifier.completeExercise();
 
                       if (newlyUnlocked.isNotEmpty) {
+                        // Determine the message text
                         final message = newlyUnlocked.length == 1
                             ? 'Achievement unlocked: ${newlyUnlocked.first.title}'
                             : '${newlyUnlocked.length} achievements unlocked: '
                                   '${newlyUnlocked.map((achievement) => achievement.title).join(', ')}';
 
+                        final iconToShow = newlyUnlocked.length == 1
+                            ? newlyUnlocked.first.icon
+                            : Icons.emoji_events;
+
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(message),
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 3),
+                            content: Row(
+                              spacing: 12,
+                              children: [
+                                Icon(iconToShow, size: 24),
+                                Expanded(child: Text(message)),
+                              ],
+                            ),
                           ),
                         );
                       }

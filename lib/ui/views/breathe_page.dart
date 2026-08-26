@@ -38,63 +38,74 @@ class _BreathePageState extends ConsumerState<BreathePage> {
     final repetitions = state.repetitions;
     final speedMultiplier = state.speedMultiplier;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 48),
-        child: Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: showButton
-                ? _PreStartOverlay(
-                    key: const ValueKey('pre-start'),
-                    pattern: pattern,
-                    repetitions: repetitions,
-                    onRepetitionsChanged: notifier.setRepetitions,
-                    speedMultiplier: speedMultiplier,
-                    onSpeedMultiplierChanged: notifier.setSpeedMultiplier,
-                    onStart: () {
-                      unawaited(_synth?.start());
-                      notifier.toggleShowButton();
-                    },
-                  )
-                : BreathGuide(
-                    key: const ValueKey('exercise'),
-                    pattern: pattern,
-                    totalRepetitions: repetitions,
-                    speedMultiplier: speedMultiplier,
-                    onExerciseCompleted: () async {
-                      final messenger = ScaffoldMessenger.of(context);
+    return PopScope(
+      // While an exercise is running, swallow the back navigation so we can
+      // abort it ourselves instead of letting the app pop/close underneath
+      // it.
+      canPop: !state.isExercising,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        unawaited(_synth?.stop());
+        notifier.abortExercise();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48),
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: showButton
+                  ? _PreStartOverlay(
+                      key: const ValueKey('pre-start'),
+                      pattern: pattern,
+                      repetitions: repetitions,
+                      onRepetitionsChanged: notifier.setRepetitions,
+                      speedMultiplier: speedMultiplier,
+                      onSpeedMultiplierChanged: notifier.setSpeedMultiplier,
+                      onStart: () {
+                        unawaited(_synth?.start());
+                        notifier.toggleShowButton();
+                      },
+                    )
+                  : BreathGuide(
+                      key: const ValueKey('exercise'),
+                      pattern: pattern,
+                      totalRepetitions: repetitions,
+                      speedMultiplier: speedMultiplier,
+                      onExerciseCompleted: () async {
+                        final messenger = ScaffoldMessenger.of(context);
 
-                      await _synth?.stop();
+                        await _synth?.stop();
 
-                      final newlyUnlocked = await notifier.completeExercise();
+                        final newlyUnlocked = await notifier.completeExercise();
 
-                      if (newlyUnlocked.isNotEmpty) {
-                        // Determine the message text
-                        final message = newlyUnlocked.length == 1
-                            ? 'Achievement unlocked: ${newlyUnlocked.first.title}'
-                            : '${newlyUnlocked.length} achievements unlocked: '
-                                  '${newlyUnlocked.map((achievement) => achievement.title).join(', ')}';
+                        if (newlyUnlocked.isNotEmpty) {
+                          // Determine the message text
+                          final message = newlyUnlocked.length == 1
+                              ? 'Achievement unlocked: ${newlyUnlocked.first.title}'
+                              : '${newlyUnlocked.length} achievements unlocked: '
+                                    '${newlyUnlocked.map((achievement) => achievement.title).join(', ')}';
 
-                        final iconToShow = newlyUnlocked.length == 1
-                            ? newlyUnlocked.first.icon
-                            : Icons.emoji_events;
+                          final iconToShow = newlyUnlocked.length == 1
+                              ? newlyUnlocked.first.icon
+                              : Icons.emoji_events;
 
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              spacing: 12,
-                              children: [
-                                Icon(iconToShow, size: 24),
-                                Expanded(child: Text(message)),
-                              ],
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                spacing: 12,
+                                children: [
+                                  Icon(iconToShow, size: 24),
+                                  Expanded(child: Text(message)),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                          );
+                        }
+                      },
+                    ),
+            ),
           ),
         ),
       ),

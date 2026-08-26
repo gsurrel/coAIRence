@@ -142,4 +142,13 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
 
     return newlyUnlocked;
   }
+
+  /// Aborts the exercise currently in progress, if any, without logging it
+  /// to the database, and returns to the pre-start view.
+  ///
+  /// Does nothing if no exercise is currently running.
+  void abortExercise() {
+    if (!state.isExercising) return;
+    state = state.copyWith(showButton: true);
+  }
 }

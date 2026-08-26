@@ -45,9 +45,6 @@ class _BreathAnimationControllerState
   late final Duration cycleDuration;
   late final Duration totalDuration;
 
-  BreathSynthService? _synth;
-  BreathPhase _lastPhase = BreathPhase.idle;
-
   @override
   void initState() {
     super.initState();
@@ -66,13 +63,22 @@ class _BreathAnimationControllerState
 
     if (widget.audioEnabled) {
       unawaited(WakelockPlus.enable());
-      _synth = ref.read(breathSynthServiceProvider);
 
-      // Synth should already be started by the page — we just verify
-      if (_synth case final BreathSynthService synth) unawaited(synth.start());
+      // The synth drives its own wall-clock timer for the whole exercise
+      // (see BreathSynthService.startCycle) instead of being pushed
+      // per-frame from this controller — that keeps sound/haptics running
+      // smoothly even if the app is backgrounded and Flutter's animation
+      // ticks pause.
+      unawaited(
+        ref
+            .read(breathSynthServiceProvider)
+            .startCycle(
+              pattern: widget.pattern,
+              totalRepetitions: widget.totalRepetitions,
+              speedMultiplier: widget.speedMultiplier,
+            ),
+      );
     }
-
-    _controller.addListener(_onTick);
 
     unawaited(
       _controller.forward().whenComplete(() async {
@@ -85,63 +91,8 @@ class _BreathAnimationControllerState
     );
   }
 
-  void _onTick() {
-    if (_synth case final BreathSynthService synth) {
-      final breathPct = getCurrentBreathPercentage();
-      final progress = getCycleProgress();
-      final phase = _detectPhase(progress);
-
-      synth.update(breathPct, phase);
-
-      if (phase != _lastPhase && phase != BreathPhase.idle) {
-        unawaited(synth.triggerHaptic(phase));
-      }
-      _lastPhase = phase;
-    }
-  }
-
-  BreathPhase _detectPhase(double progress) {
-    final steps = widget.pattern.steps;
-    if (steps.isEmpty) return BreathPhase.idle;
-
-    final totalMs = cycleDuration.inMilliseconds;
-    if (totalMs == 0) return BreathPhase.idle;
-
-    final currentTimeMs = progress * totalMs;
-    var elapsed = 0.0;
-    var currentStepIndex = 0;
-
-    for (var i = 0; i < steps.length; i++) {
-      final stepEnd = elapsed + steps[i].duration.inMilliseconds;
-      if (currentTimeMs <= stepEnd) {
-        currentStepIndex = i;
-        break;
-      }
-      elapsed = stepEnd;
-      if (i == steps.length - 1) {
-        currentStepIndex = steps.length - 1;
-      }
-    }
-
-    final currentStep = steps[currentStepIndex];
-    final prevBreathTo = currentStepIndex > 0
-        ? steps[currentStepIndex - 1].breathTo
-        : 0.0;
-
-    final delta = currentStep.breathTo - prevBreathTo;
-
-    if (delta.abs() < 0.01) {
-      return prevBreathTo > 0.5 ? BreathPhase.holdIn : BreathPhase.holdOut;
-    } else if (delta > 0) {
-      return BreathPhase.inhale;
-    } else {
-      return BreathPhase.exhale;
-    }
-  }
-
   @override
   void dispose() {
-    _controller.removeListener(_onTick);
     // Do NOT stop synth — it persists
     if (widget.audioEnabled) {
       unawaited(WakelockPlus.disable());

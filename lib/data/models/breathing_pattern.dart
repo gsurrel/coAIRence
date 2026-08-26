@@ -125,4 +125,46 @@ class BreathingPattern {
     }
     return _modeKeys.last.mode;
   }
+
+  /// Returns the [BreathPhase] (inhale/hold/exhale/idle) active at
+  /// [progress] (0.0-1.0 through one cycle), derived from which step
+  /// contains it and whether that step is rising, falling, or flat
+  /// relative to the previous one.
+  BreathPhase getBreathPhase(double progress) {
+    if (steps.isEmpty) return BreathPhase.idle;
+
+    final totalMs = _totalDuration.inMilliseconds;
+    if (totalMs == 0) return BreathPhase.idle;
+
+    final currentTimeMs = progress * totalMs;
+    var elapsed = 0.0;
+    var currentStepIndex = 0;
+
+    for (var i = 0; i < steps.length; i++) {
+      final stepEnd = elapsed + steps[i].duration.inMilliseconds;
+      if (currentTimeMs <= stepEnd) {
+        currentStepIndex = i;
+        break;
+      }
+      elapsed = stepEnd;
+      if (i == steps.length - 1) {
+        currentStepIndex = steps.length - 1;
+      }
+    }
+
+    final currentStep = steps[currentStepIndex];
+    final prevBreathTo = currentStepIndex > 0
+        ? steps[currentStepIndex - 1].breathTo
+        : 0.0;
+
+    final delta = currentStep.breathTo - prevBreathTo;
+
+    if (delta.abs() < 0.01) {
+      return prevBreathTo > 0.5 ? BreathPhase.holdIn : BreathPhase.holdOut;
+    } else if (delta > 0) {
+      return BreathPhase.inhale;
+    } else {
+      return BreathPhase.exhale;
+    }
+  }
 }

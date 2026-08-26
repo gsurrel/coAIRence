@@ -120,7 +120,7 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   /// hides the exercise view.
   ///
   /// Returns any achievements newly unlocked by this session, so the caller
-  /// can show a notification.
+  /// can show a notification, so it stays out of the notifier.
   Future<List<AchievementDefinition>> completeExercise() async {
     final pattern = state.selectedPattern;
     final repetitions = state.repetitions;

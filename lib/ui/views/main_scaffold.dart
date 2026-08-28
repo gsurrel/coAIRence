@@ -7,6 +7,8 @@ import 'package:coairence/ui/views/breathes_library_page.dart';
 import 'package:coairence/ui/views/home_page.dart';
 import 'package:coairence/ui/views/profile_page.dart';
 import 'package:coairence/ui/views/settings_page.dart';
+import 'package:coairence/ui/widgets/nav_ping_icon.dart';
+import 'package:coairence/ui/widgets/notched_nav_bar.dart';
 import 'package:coairence/ui/widgets/pattern_tag_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -27,6 +29,10 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
   late Animation<double> _pageAnimation;
   late AnimationController _navHideController;
   late Animation<double> _navHideAnimation;
+
+  // Drives the one-shot "sonar ping" nudge on the Breathe nav icon
+  // whenever the selected breathing pattern changes elsewhere in the app.
+  late AnimationController _breathePingController;
 
   @override
   void initState() {
@@ -58,10 +64,16 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       parent: _navHideController,
       curve: Curves.easeInOut,
     );
+
+    _breathePingController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
+    _breathePingController.dispose();
     _navHideController.dispose();
     _pageAnimationController.dispose();
     super.dispose();
@@ -144,6 +156,18 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       },
     );
 
+    // Nudge the Breathe tab with a one-shot sonar ping whenever the
+    // selected pattern changes, wherever that happens (home, library...),
+    // so the user notices there's now something new to go breathe.
+    ref.listen<BreathingPattern>(
+      breathPageProvider.select((s) => s.selectedPattern),
+      (previous, next) {
+        if (previous != null && previous.name != next.name) {
+          _breathePingController.forward(from: 0);
+        }
+      },
+    );
+
     final currentTab = ref.watch(mainScaffoldTabProvider);
     final filterTags = ref.watch(
       breathPageProvider.select((s) => s.filterTags),
@@ -151,7 +175,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
     final activeFilter = filterTags.isNotEmpty ? filterTags.first : null;
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
+        animateColor: true,
         title: Text.rich(
           TextSpan(
             children: [
@@ -214,45 +240,42 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
             ),
         ],
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            AnimatedBackdrop(animation: _pageAnimation),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeInOut,
-              switchOutCurve: Curves.easeInOut,
-              transitionBuilder: (child, animation) {
-                final isEntering = switch (child.key) {
-                  ValueKey<int>(:final int value) => value == _currentIndex,
-                  _ => false,
-                };
-                if (isEntering) {
-                  final enterTween = _getEnterTween();
-                  return SlideTransition(
-                    position: animation.drive(
-                      enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                    ),
-                    child: child,
-                  );
-                } else {
-                  final exitTween = _getExitTween();
-                  return SlideTransition(
-                    position: animation.drive(
-                      exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                    ),
-                    child: child,
-                  );
-                }
-              },
-              child: Container(
-                key: ValueKey<int>(_currentIndex),
-                child:
-                    _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
-              ),
+      body: Stack(
+        children: [
+          AnimatedBackdrop(animation: _pageAnimation),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, animation) {
+              final isEntering = switch (child.key) {
+                ValueKey<int>(:final int value) => value == _currentIndex,
+                _ => false,
+              };
+              if (isEntering) {
+                final enterTween = _getEnterTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              } else {
+                final exitTween = _getExitTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              }
+            },
+            child: Container(
+              key: ValueKey<int>(_currentIndex),
+              child: _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: SizeTransition(
         sizeFactor: Tween<double>(begin: 0, end: 1).animate(
@@ -262,19 +285,31 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
           ),
         ),
         alignment: AlignmentGeometry.bottomCenter,
-        child: BottomNavigationBar(
+        child: NotchedNavBar(
           currentIndex: currentTab,
-          type: BottomNavigationBarType.fixed,
+          // type: BottomNavigationBarType.fixed,
           onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.air), label: 'Patterns'),
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.air),
+              label: 'Patterns',
+            ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle_fill),
+              icon: NavPingIcon(
+                animation: _breathePingController,
+                icon: Icons.play_circle_fill,
+              ),
               label: 'Breathe',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+            const BottomNavigationBarItem(
               icon: Icon(Icons.settings),
               label: 'Settings',
             ),

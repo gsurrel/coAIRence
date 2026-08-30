@@ -32,6 +32,8 @@ class _BreathCurveState extends State<BreathCurve>
   late final AnimationController _modeController;
   late BreathMode _previousMode;
 
+  _BreathPainter? _painter;
+
   @override
   void initState() {
     super.initState();
@@ -55,25 +57,27 @@ class _BreathCurveState extends State<BreathCurve>
   @override
   void dispose() {
     _modeController.dispose();
+    _painter?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    final painter = _painter ??= _BreathPainter(color: color)
+      ..updateColor(color);
+
     return AnimatedBuilder(
       animation: _modeController,
       builder: (context, _) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: _BreathPainter(
-            context,
-            cycleProgress: widget.cycleProgress,
-            breathPercent: widget.breathPercent,
-            mode: widget.mode,
-            previousMode: _previousMode,
-            modeT: Curves.easeInOut.transform(_modeController.value),
-          ),
+        painter.update(
+          cycleProgress: widget.cycleProgress,
+          breathPercent: widget.breathPercent,
+          mode: widget.mode,
+          previousMode: _previousMode,
+          modeT: Curves.easeInOut.transform(_modeController.value),
         );
+        return CustomPaint(size: Size.infinite, painter: painter);
       },
     );
   }
@@ -111,34 +115,51 @@ class _FillDescriptor {
   final double rightAlpha;
 }
 
-class _BreathPainter extends CustomPainter {
-  _BreathPainter(
-    BuildContext context, {
-    required this.cycleProgress,
-    required this.breathPercent,
-    required this.mode,
-    required this.previousMode,
-    required this.modeT,
-  }) : _color = Theme.of(context).colorScheme.primary,
-       _paintBorder = Paint()
-         ..color = Theme.of(context).colorScheme.primary
-         ..strokeWidth = 2.0
-         ..strokeCap = StrokeCap.round
-         ..style = PaintingStyle.stroke;
+class _BreathPainter extends CustomPainter with ChangeNotifier {
+  _BreathPainter({required Color color})
+    : _color = color,
+      _paintBorder = Paint()
+        ..color = color
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+      _paintFill = Paint();
 
-  final double breathPercent;
-  final double cycleProgress;
-  final BreathMode mode;
+  double breathPercent = 0;
+  double cycleProgress = 0;
+  BreathMode mode = BreathMode.nose;
 
   /// The mode being eased away from, so a mode change can be
   /// cross-faded rather than switching instantly.
-  final BreathMode previousMode;
+  BreathMode previousMode = BreathMode.nose;
 
   /// Progress (0.0-1.0, eased) from [previousMode] to [mode].
-  final double modeT;
+  double modeT = 1;
 
-  final Color _color;
+  Color _color;
   final Paint _paintBorder;
+  final Paint _paintFill;
+
+  void updateColor(Color color) {
+    if (_color == color) return;
+    _color = color;
+    _paintBorder.color = color;
+  }
+
+  void update({
+    required double cycleProgress,
+    required double breathPercent,
+    required BreathMode mode,
+    required BreathMode previousMode,
+    required double modeT,
+  }) {
+    this.cycleProgress = cycleProgress;
+    this.breathPercent = breathPercent;
+    this.mode = mode;
+    this.previousMode = previousMode;
+    this.modeT = modeT;
+    notifyListeners();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -173,11 +194,9 @@ class _BreathPainter extends CustomPainter {
       modeT,
     );
 
+    _updateFillPaint(centerX: centerX, offset: offset, fill: fill);
     canvas
-      ..drawPath(
-        path,
-        _fillPaint(centerX: centerX, offset: offset, fill: fill),
-      )
+      ..drawPath(path, _paintFill)
       ..drawPath(path, _paintBorder);
   }
 
@@ -189,7 +208,7 @@ class _BreathPainter extends CustomPainter {
   /// Per the app's mirrored convention, screen-right dims for
   /// [BreathMode.noseLeft] (left nostril open) and screen-left dims for
   /// [BreathMode.noseRight].
-  Paint _fillPaint({
+  void _updateFillPaint({
     required double centerX,
     required double offset,
     required _FillDescriptor fill,
@@ -201,26 +220,25 @@ class _BreathPainter extends CustomPainter {
     // at the start/end of a step) — fall back to a flat, evenly-blended
     // fill rather than handing Skia a degenerate linear gradient.
     if (offset == 0) {
-      return Paint()..color = _color.withAlpha((leftAlpha + rightAlpha) ~/ 2);
+      _paintFill
+        ..shader = null
+        ..color = _color.withAlpha((leftAlpha + rightAlpha) ~/ 2);
+      return;
     }
 
-    return Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(centerX - offset, 0),
-        Offset(centerX + offset, 0),
-        [
-          _color.withAlpha(leftAlpha),
-          _color.withAlpha(leftAlpha),
-          _color.withAlpha(rightAlpha),
-          _color.withAlpha(rightAlpha),
-        ],
-        const [0.0, 0.49, 0.51, 1.0],
-      );
+    _paintFill.shader = ui.Gradient.linear(
+      Offset(centerX - offset, 0),
+      Offset(centerX + offset, 0),
+      [
+        _color.withAlpha(leftAlpha),
+        _color.withAlpha(leftAlpha),
+        _color.withAlpha(rightAlpha),
+        _color.withAlpha(rightAlpha),
+      ],
+      const [0.0, 0.49, 0.51, 1.0],
+    );
   }
 
   @override
-  bool shouldRepaint(_BreathPainter oldDelegate) =>
-      oldDelegate.cycleProgress != cycleProgress ||
-      oldDelegate.mode != mode ||
-      oldDelegate.modeT != modeT;
+  bool shouldRepaint(_BreathPainter oldDelegate) => false;
 }

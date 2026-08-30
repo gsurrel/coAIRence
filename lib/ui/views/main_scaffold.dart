@@ -243,36 +243,39 @@ class _MainScaffoldState extends ConsumerState<MainScaffold>
       body: Stack(
         children: [
           AnimatedBackdrop(animation: _pageAnimation),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeInOut,
-            switchOutCurve: Curves.easeInOut,
-            transitionBuilder: (child, animation) {
-              final isEntering = switch (child.key) {
-                ValueKey<int>(:final int value) => value == _currentIndex,
-                _ => false,
-              };
-              if (isEntering) {
-                final enterTween = _getEnterTween();
-                return SlideTransition(
-                  position: animation.drive(
-                    enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                  ),
-                  child: child,
-                );
-              } else {
-                final exitTween = _getExitTween();
-                return SlideTransition(
-                  position: animation.drive(
-                    exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                  ),
-                  child: child,
-                );
-              }
-            },
-            child: Container(
-              key: ValueKey<int>(_currentIndex),
-              child: _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
+          RepaintBoundary(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              transitionBuilder: (child, animation) {
+                final isEntering = switch (child.key) {
+                  ValueKey<int>(:final int value) => value == _currentIndex,
+                  _ => false,
+                };
+                if (isEntering) {
+                  final enterTween = _getEnterTween();
+                  return SlideTransition(
+                    position: animation.drive(
+                      enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                    ),
+                    child: child,
+                  );
+                } else {
+                  final exitTween = _getExitTween();
+                  return SlideTransition(
+                    position: animation.drive(
+                      exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                    ),
+                    child: child,
+                  );
+                }
+              },
+              child: Container(
+                key: ValueKey<int>(_currentIndex),
+                child:
+                    _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
+              ),
             ),
           ),
         ],

@@ -2,30 +2,12 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:coairence/ui/painters/shader_painter.dart';
-import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Paints the particle shader live while a page transition is in progress,
 /// and freezes on a cached snapshot of the last frame once the transition
 /// stops — so the shader only burns GPU cycles while the backdrop is
 /// actually supposed to be animating, not while sitting idle on a page.
-///
-/// The shader itself (see particle_shader.frag) is a 45-iteration,
-/// transcendental-heavy Shadertoy-style effect — cheap on a desktop GPU,
-/// but expensive enough on older mobile GPUs (tested: Galaxy S8, legacy
-/// Skia GL backend) that re-running it continuously was costing ~50ms of
-/// raster time on every frame, including frames where the app was just
-/// sitting still. Since the shader is only meant to move during a
-/// transition (~300ms), that's the only time it needs to be live; the
-/// rest of the time a static cached bitmap is visually indistinguishable
-/// from — and vastly cheaper than — the shader still running.
-///
-/// (An earlier version of this also adapted the shader's render
-/// resolution to measured raster cost. That was dropped: it added a lot
-/// of state-machine complexity for a one-shot capture that isn't the
-/// actual per-frame cost problem, and it introduced its own bugs around
-/// live/frozen resolution mismatches. This version always renders at
-/// native resolution.)
 class ShaderBackdrop extends StatefulWidget {
   const ShaderBackdrop({
     required this.animationValue,
@@ -69,7 +51,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   }
 
   Future<void> _loadShader() async {
-    const path = 'lib/particle_shader.frag';
+    const path = 'lib/cosmic_warp.frag';
     final program = await ui.FragmentProgram.fromAsset(path);
     if (!mounted) return;
     setState(() => _shader = program.fragmentShader());
@@ -148,7 +130,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
       ..setFloat(0, size.width)
       ..setFloat(1, size.height)
       // uTime uniform: mapped from animationValue as per original tuning.
-      ..setFloat(2, 90 + widget.animationValue / 2);
+      ..setFloat(2, widget.animationValue);
 
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
@@ -223,7 +205,7 @@ class _LiveShaderPainter extends CustomPainter {
     shader
       ..setFloat(0, fullSize.width)
       ..setFloat(1, fullSize.height)
-      ..setFloat(2, 90 + animationValue / 2);
+      ..setFloat(2, 23 + animationValue);
 
     _paint.shader = shader;
     canvas.drawRect(

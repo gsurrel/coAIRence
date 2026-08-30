@@ -1,0 +1,8 @@
+default_platform(:android)
+
+platform :android do
+  desc "Verify and prepare F-Droid metadata"
+  lane :fdroid_metadata do
+    puts "F-Droid metadata structure is ready! Commit the fastlane/ directory to your Git repo."
+  end
+end

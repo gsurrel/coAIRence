@@ -30,6 +30,7 @@ class ExerciseConfigControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      spacing: 4,
       children: [
         _ConfigRow(
           label: 'Repetitions',
@@ -41,7 +42,6 @@ class ExerciseConfigControls extends StatelessWidget {
               ? () => onRepetitionsChanged(repetitions + 1)
               : null,
         ),
-        const SizedBox(height: 4),
         _ConfigRow(
           label: 'Speed',
           valueLabel: '${_formatSpeed(speedMultiplier)}x',

@@ -25,9 +25,9 @@ class PatternDetailsSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            spacing: 12,
             children: [
               Icon(pattern.icon, color: theme.colorScheme.primary, size: 28),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   pattern.name,

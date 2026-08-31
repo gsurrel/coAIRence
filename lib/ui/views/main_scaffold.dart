@@ -2,6 +2,7 @@ import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
 import 'package:coairence/ui/views/breathes_library.dart';
 import 'package:coairence/ui/views/settings_page.dart';
+import 'package:coairence/ui/widgets/profile_page.dart';
 import 'package:material_ui/material_ui.dart';
 
 class MainScaffold extends StatefulWidget {
@@ -82,7 +83,7 @@ class _MainScaffoldState extends State<MainScaffold>
     Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
     BreathesLibraryPage(),
     BreathePage(),
-    Center(child: Text('Profile Page', style: TextStyle(fontSize: 24))),
+    ProfilePage(),
     SettingsPage(),
   ];
 

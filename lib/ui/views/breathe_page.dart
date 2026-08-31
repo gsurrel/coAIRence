@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/services/breath_synth_service.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
+import 'package:coairence/ui/viewmodels/profile_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breath_pattern_backdrop.dart';
 import 'package:coairence/ui/widgets/breathe_button.dart';
@@ -69,7 +70,55 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                     totalRepetitions: _repetitions,
                     speedMultiplier: _speedMultiplier,
                     onExerciseCompleted: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+
                       await _synth?.stop();
+
+                      final profileService = ref.read(profileServiceProvider);
+                      final safeSpeed = _speedMultiplier > 0
+                          ? _speedMultiplier
+                          : 1.0;
+
+                      final newlyUnlocked = await profileService.logSession(
+                        patternName: pattern.name,
+                        duration: Duration(
+                          milliseconds:
+                              (pattern.totalDuration.inMilliseconds *
+                                      _repetitions /
+                                      safeSpeed)
+                                  .round(),
+                        ),
+                        cyclesCompleted: _repetitions,
+                      );
+
+                      unawaited(
+                        ref.read(profilePageProvider.notifier).refresh(),
+                      );
+
+                      if (newlyUnlocked.isNotEmpty) {
+                        // Determine the message text
+                        final message = newlyUnlocked.length == 1
+                            ? 'Achievement unlocked: ${newlyUnlocked.first.title}'
+                            : '${newlyUnlocked.length} achievements unlocked: '
+                                  '${newlyUnlocked.map((achievement) => achievement.title).join(', ')}';
+
+                        final iconToShow = newlyUnlocked.length == 1
+                            ? newlyUnlocked.first.icon
+                            : Icons.emoji_events;
+
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              spacing: 12,
+                              children: [
+                                Icon(iconToShow, size: 24),
+                                Expanded(child: Text(message)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
                       notifier.toggleShowButton();
                     },
                   ),
@@ -108,16 +157,15 @@ class _PreStartOverlay extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 24,
               children: [
                 PatternInfoPanel(pattern: pattern),
-                const SizedBox(height: 24),
                 ExerciseConfigControls(
                   repetitions: repetitions,
                   onRepetitionsChanged: onRepetitionsChanged,
                   speedMultiplier: speedMultiplier,
                   onSpeedMultiplierChanged: onSpeedMultiplierChanged,
                 ),
-                const SizedBox(height: 24),
                 BreatheButton(onPressed: onStart),
               ],
             ),

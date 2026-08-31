@@ -12,6 +12,7 @@ dependencies:
   flutter_riverpod: ^3.4.2
 
   material_ui: any
+  wakelock_plus: ^1.7.0
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:

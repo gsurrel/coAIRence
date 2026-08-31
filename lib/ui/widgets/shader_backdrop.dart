@@ -25,6 +25,7 @@ class _ShaderBackdropState extends State<ShaderBackdrop> {
   Future<void> _loadMyShader() async {
     const path = 'lib/particle_shader.frag';
     final program = await FragmentProgram.fromAsset(path);
+    if (!mounted) return;
     setState(() => shader = program.fragmentShader());
   }
 

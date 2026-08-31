@@ -1,84 +1,159 @@
-import 'dart:math';
-
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:material_ui/material_ui.dart';
 
 class BreatheRepository {
   final List<BreathingPattern> _patterns = [
+    // 🧘 CALMING & ANXIETY RELIEF
     BreathingPattern(
       name: 'Box Breathing',
-      description:
-          'Inhale, hold, exhale, and hold again, each for an equal count.',
+      description: 'Used by Navy SEALs. Equal counts of inhale, hold, exhale, and hold. Great for acute stress.',
+      tags: [PatternTag.calming],
+      icon: Icons.crop_square,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)), // inhale over 4s
-        (breathTo: 1.0, duration: const Duration(seconds: 4)), // hold for 4s
-        (breathTo: 0.0, duration: const Duration(seconds: 4)), // exhale over 4s
-        (breathTo: 0.0, duration: const Duration(seconds: 4)), // hold for 4s
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 4)),
       ],
     ),
     BreathingPattern(
-      name: '4-7-8 Breathing',
-      description:
-          'Inhale for 4 seconds, hold for 7 seconds, and exhale for 8 seconds.',
+      name: 'Triangle Breathing',
+      description: 'Removes the empty-lung hold of box breathing, making it easier to manage anxiety.',
+      tags: [PatternTag.calming],
+      icon: Icons.change_history,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)), // inhale over 4s
-        (breathTo: 1.0, duration: const Duration(seconds: 7)), // hold for 7s
-        (breathTo: 0.0, duration: const Duration(seconds: 8)), // exhale over 8s
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 4)),
       ],
     ),
     BreathingPattern(
-      name: 'Diaphragmatic Breathing',
-      description: 'Deep breaths that engage the diaphragm.',
+      name: '4-7-8 Relaxing Breath',
+      description: 'A natural tranquilizer. Extended hold and exhale strongly activate parasympathetic response.',
+      tags: [PatternTag.calming, PatternTag.sleep],
+      icon: Icons.cloud,
+      difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 5)), // inhale over 5s
-        (breathTo: 0.0, duration: const Duration(seconds: 5)), // exhale over 5s
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 1.0, duration: const Duration(seconds: 7)),
+        (breathTo: 0.0, duration: const Duration(seconds: 8)),
       ],
     ),
+
+    // 🌙 SLEEP & DEEP RELAXATION
     BreathingPattern(
-      name: 'Alternate Nostril Breathing',
-      description:
-          'Breathing through one nostril at a time while closing the other '
-          'nostril with a finger.',
+      name: 'Deep Sleep (1:2 Ratio)',
+      description: 'Prolonged exhale significantly slows heart rate to prepare for sleep.',
+      tags: [PatternTag.sleep],
+      icon: Icons.nightlight_round,
       steps: [
-        (
-          breathTo: 1.0,
-          duration: const Duration(seconds: 4),
-        ), // inhale right nostril over 4s
-        (breathTo: 1.0, duration: const Duration(seconds: 4)), // hold for 4s
-        (
-          breathTo: 0.0,
-          duration: const Duration(seconds: 4),
-        ), // exhale left nostril over 4s
-        (breathTo: 0.0, duration: const Duration(seconds: 4)), // hold for 4s
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 8)),
       ],
     ),
     BreathingPattern(
       name: 'Pursed Lip Breathing',
       description:
-          'Inhale through the nose and exhale slowly through pursed lips.',
+          'Keeps airways open longer. Recommended for shortness of breath.',
+      tags: [PatternTag.calming],
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 4)), // inhale over 4s
-        (breathTo: 0.0, duration: const Duration(seconds: 6)), // exhale over 6s
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 6)),
+      ],
+    ),
+
+    // ❤️ HEALTH & HRV OPTIMIZATION
+    BreathingPattern(
+      name: 'Coherent Breathing (5.5s)',
+      description:
+          'The gold standard for maximizing Heart Rate Variability (HRV).',
+      tags: [PatternTag.hrv, PatternTag.focus],
+      icon: Icons.favorite_border,
+      difficulty: 2,
+      steps: [
+        (breathTo: 1.0, duration: const Duration(milliseconds: 5500)),
+        (breathTo: 0.0, duration: const Duration(milliseconds: 5500)),
       ],
     ),
     BreathingPattern(
       name: 'Resonant Breathing',
-      description:
-          'Breathe at a rate of 5 breaths per minute, with equal time for '
-          'inhalation and exhalation.',
+      description: '5 breaths per minute. A slower alternative for deep cardiovascular rest.',
+      tags: [PatternTag.hrv, PatternTag.sleep],
+      icon: Icons.monitor_heart,
+      difficulty: 2,
       steps: [
-        (breathTo: 1.0, duration: const Duration(seconds: 6)), // inhale over 6s
-        (breathTo: 0.0, duration: const Duration(seconds: 6)), // exhale over 6s
+        (breathTo: 1.0, duration: const Duration(seconds: 6)),
+        (breathTo: 0.0, duration: const Duration(seconds: 6)),
+      ],
+    ),
+    BreathingPattern(
+      name: 'Physiological Sigh',
+      description: 'Double-inhale pops open alveoli, long exhale offloads CO2 to kill stress instantly.',
+      tags: [PatternTag.calming, PatternTag.energy],
+      icon: Icons.bolt,
+      difficulty: 3,
+      steps: [
+        (breathTo: 1.0, duration: const Duration(seconds: 3)),
+        (breathTo: 1.0, duration: const Duration(seconds: 1)),
+        (breathTo: 0.0, duration: const Duration(seconds: 8)),
+      ],
+    ),
+
+    // 🧠 ENERGY & FOCUS
+    BreathingPattern(
+      name: 'Energizing Power Breath',
+      description:
+          'Fast, rhythmic breathing increases oxygenation and alertness.',
+      tags: [PatternTag.energy, PatternTag.focus],
+      icon: Icons.flash_on,
+      difficulty: 2,
+      steps: [
+        (breathTo: 1.0, duration: const Duration(seconds: 2)),
+        (breathTo: 0.0, duration: const Duration(seconds: 2)),
+      ],
+    ),
+    BreathingPattern(
+      name: 'Focus Flow',
+      description:
+          'Balanced rhythm with subtle pauses for deep work and flow states.',
+      tags: [PatternTag.focus],
+      icon: Icons.psychology,
+      difficulty: 2,
+      steps: [
+        (breathTo: 1.0, duration: const Duration(seconds: 5)),
+        (breathTo: 1.0, duration: const Duration(seconds: 2)),
+        (breathTo: 0.0, duration: const Duration(seconds: 5)),
+        (breathTo: 0.0, duration: const Duration(seconds: 2)),
+      ],
+    ),
+    BreathingPattern(
+      name: 'Alternate Nostril Breathing',
+      description: 'Yogic Nadi Shodhana. Follow UI prompts to switch nostrils for calm focus.',
+      tags: [PatternTag.focus, PatternTag.calming],
+      icon: Icons.swap_horiz,
+      difficulty: 3,
+      steps: [
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 1.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 4)),
+        (breathTo: 0.0, duration: const Duration(seconds: 4)),
       ],
     ),
   ];
 
-  int get selectedPatternIndex => _selectedPatternIndex;
-  int _selectedPatternIndex = 0;
-  set selectedPatternIndex(int index) {
-    _selectedPatternIndex = min(max(index, 0), _patterns.length - 1);
+  // --- HELPER METHODS FOR UI FILTERING ---
+
+  /// Get all unique tags currently in use
+  List<PatternTag> get availableTags =>
+      _patterns.expand((p) => p.tags).toSet().toList();
+
+  /// Filter patterns by one or more tags
+  List<BreathingPattern> getPatternsByTags(List<PatternTag> filterTags) {
+    if (filterTags.isEmpty) return _patterns;
+    return _patterns
+        .where((p) => p.tags.any((t) => filterTags.contains(t)))
+        .toList();
   }
 
   List<BreathingPattern> get patterns => _patterns;
-
-  BreathingPattern get selectedPattern => _patterns[_selectedPatternIndex];
 }

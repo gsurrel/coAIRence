@@ -9,12 +9,17 @@ class BreathAnimationController extends StatefulWidget {
     required this.totalRepetitions,
     required this.onExerciseCompleted,
     required this.child,
+    this.speedMultiplier = 1.0,
     super.key,
   });
 
   final BreathingPattern pattern;
   final int totalRepetitions;
   final VoidCallback onExerciseCompleted;
+
+  /// Scales the pace of the exercise. `1.0` follows the pattern's natural
+  /// timing; `> 1.0` runs faster, `< 1.0` runs slower.
+  final double speedMultiplier;
   final Widget Function(
     BuildContext,
     double Function() getCycleProgress,
@@ -41,7 +46,11 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
       Duration.zero,
       (prev, step) => prev + step.duration,
     );
-    totalDuration = cycleDuration * widget.totalRepetitions;
+    final baseDuration = cycleDuration * widget.totalRepetitions;
+    totalDuration = Duration(
+      microseconds: (baseDuration.inMicroseconds / widget.speedMultiplier)
+          .round(),
+    );
 
     _controller = AnimationController(vsync: this, duration: totalDuration);
 

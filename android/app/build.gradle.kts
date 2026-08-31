@@ -54,23 +54,26 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (!System.getenv("KEYSTORE").isNullOrBlank()) signingConfigs.getByName("release") else null
         }
     }
 
     // Execution-time: only fails if you actually try to build/bundle release
     tasks.matching { it.name.contains("Release") }.configureEach {
         doFirst {
-            val required = listOf("KEYSTORE", "KEY", "KEYSTORE_PASSWORD", "KEY_PASSWORD")
-            val missing = required.filter { System.getenv(it).isNullOrBlank() }
-            if (missing.isNotEmpty()) {
-                throw GradleException(
-                    "Missing env vars for release signing: ${missing.joinToString()}\n" +
-                    "Set them and re-run, e.g.:\n" +
-                    "  read -s -p 'Keystore password: ' KEYSTORE_PASSWORD; echo\n" +
-                    "  export KEYSTORE=/path/to/your.jks KEY=your-alias KEYSTORE_PASSWORD\n" +
-                    "  ./gradlew bundleProdRelease"
-                )
+            val skipKeystore = !System.getenv("SKIP_KEYSTORE").isNullOrBlank()
+            if (!skipKeystore) {
+                val required = listOf("KEYSTORE", "KEYSTORE_PASSWORD")
+                val missing = required.filter { System.getenv(it).isNullOrBlank() }
+                if (missing.isNotEmpty()) {
+                    throw GradleException(
+                        "Missing env vars for release signing: ${missing.joinToString()}\n" +
+                        "Set them and re-run, e.g.:\n" +
+                        "  read -s -p 'Keystore password: ' KEYSTORE_PASSWORD; echo\n" +
+                        "  export KEYSTORE=/path/to/your.jks KEY=your-alias KEYSTORE_PASSWORD\n" +
+                        "  ./gradlew bundleProdRelease"
+                    )
+                }
             }
         }
     }

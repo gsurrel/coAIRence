@@ -1,7 +1,6 @@
 name: coairence
-description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0
+version: 0.2.0+1 # It's used for the Android build as versionName+versionCode
 
 environment:
   sdk: ^3.13.0
@@ -29,4 +28,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   shaders:
-    - lib/particle_shader.frag
+    - lib/cosmic_warp.frag

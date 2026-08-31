@@ -9,7 +9,13 @@ class AnimatedBackdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _animation,
-    builder: (context, child) =>
-        ShaderBackdrop(animationValue: _animation.value),
+    builder: (context, child) => RepaintBoundary(
+      child: ShaderBackdrop(
+        animationValue: _animation.value,
+        isAnimating:
+            _animation.status == AnimationStatus.forward ||
+            _animation.status == AnimationStatus.reverse,
+      ),
+    ),
   );
 }

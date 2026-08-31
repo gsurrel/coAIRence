@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:coairence/data/services/breath_synth_service.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -20,7 +19,7 @@ class SettingsPage extends ConsumerWidget {
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             8,
-            8,
+            24,
             8,
             MediaQuery.of(context).padding.bottom,
           ),

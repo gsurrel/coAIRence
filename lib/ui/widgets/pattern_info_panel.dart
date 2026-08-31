@@ -1,5 +1,6 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/ui/theme/pattern_tag_style.dart';
+import 'package:coairence/ui/widgets/breath_mode_legend.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Shows the selected pattern's name, description, difficulty, and tags.
@@ -54,6 +55,10 @@ class PatternInfoPanel extends StatelessWidget {
               )
               .toList(),
         ),
+        if (pattern.hasSpecialBreathModes) ...[
+          const SizedBox(height: 20),
+          BreathModeLegend(modes: pattern.steps.map((s) => s.mode).toSet()),
+        ],
       ],
     );
   }

@@ -1,46 +1,81 @@
+import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
+import 'package:coairence/ui/viewmodels/main_scaffold_provider.dart';
 import 'package:coairence/ui/views/animated_backdrop.dart';
 import 'package:coairence/ui/views/breathe_page.dart';
-import 'package:coairence/ui/views/breathes_library.dart';
+import 'package:coairence/ui/views/breathes_library_page.dart';
+import 'package:coairence/ui/views/home_page.dart';
+import 'package:coairence/ui/views/profile_page.dart';
 import 'package:coairence/ui/views/settings_page.dart';
-import 'package:coairence/ui/widgets/profile_page.dart';
+import 'package:coairence/ui/widgets/nav_ping_icon.dart';
+import 'package:coairence/ui/widgets/notched_nav_bar.dart';
+import 'package:coairence/ui/widgets/pattern_tag_icon.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-class MainScaffold extends StatefulWidget {
+class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
 
   @override
-  State<MainScaffold> createState() => _MainScaffoldState();
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<MainScaffold>
-    with SingleTickerProviderStateMixin {
-  int _currentIndex = 2;
-  int _previousIndex = 2;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+class _MainScaffoldState extends ConsumerState<MainScaffold>
+    with TickerProviderStateMixin {
+  int _currentIndex = 0;
+  int _previousIndex = 0;
+
+  late AnimationController _pageAnimationController;
+  late Animation<double> _pageAnimation;
+  late AnimationController _navHideController;
+  late Animation<double> _navHideAnimation;
+
+  // Drives the one-shot "sonar ping" nudge on the Breathe nav icon
+  // whenever the selected breathing pattern changes elsewhere in the app.
+  late AnimationController _breathePingController;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
+    final initialTab = ref.read(mainScaffoldTabProvider);
+    _currentIndex = initialTab;
+    _previousIndex = initialTab;
+    _pageAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _animation =
+    _pageAnimation =
         Tween<double>(
           begin: _previousIndex.toDouble(),
           end: _currentIndex.toDouble(),
         ).animate(
           CurvedAnimation(
-            parent: _animationController,
+            parent: _pageAnimationController,
             curve: Curves.easeInOut,
           ),
         );
+
+    _navHideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+      value: 1,
+    );
+    _navHideAnimation = CurvedAnimation(
+      parent: _navHideController,
+      curve: Curves.easeInOut,
+    );
+
+    _breathePingController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _breathePingController.dispose();
+    _navHideController.dispose();
+    _pageAnimationController.dispose();
     super.dispose();
   }
 
@@ -49,18 +84,19 @@ class _MainScaffoldState extends State<MainScaffold>
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = targetIndex;
-      _animation =
+      _pageAnimation =
           Tween<double>(
             begin: _previousIndex.toDouble(),
             end: _currentIndex.toDouble(),
           ).animate(
             CurvedAnimation(
-              parent: _animationController,
+              parent: _pageAnimationController,
               curve: Curves.easeInOut,
             ),
           );
     });
-    _animationController.forward(from: 0);
+    _pageAnimationController.forward(from: 0);
+    ref.read(mainScaffoldTabProvider.notifier).tab = targetIndex;
   }
 
   Tween<Offset> _getEnterTween() {
@@ -80,7 +116,7 @@ class _MainScaffoldState extends State<MainScaffold>
   }
 
   static const List<Widget> _pages = [
-    Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    HomePage(),
     BreathesLibraryPage(),
     BreathePage(),
     ProfilePage(),
@@ -88,87 +124,194 @@ class _MainScaffoldState extends State<MainScaffold>
   ];
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: 'co',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) {
+    ref.listen<int>(mainScaffoldTabProvider, (previous, next) {
+      if (next != _currentIndex) {
+        setState(() {
+          _previousIndex = _currentIndex;
+          _currentIndex = next;
+          _pageAnimation =
+              Tween<double>(
+                begin: _previousIndex.toDouble(),
+                end: _currentIndex.toDouble(),
+              ).animate(
+                CurvedAnimation(
+                  parent: _pageAnimationController,
+                  curve: Curves.easeInOut,
+                ),
+              );
+        });
+        _pageAnimationController.forward(from: 0);
+      }
+    });
+
+    ref.listen<bool>(breathPageProvider.select((s) => s.isExercising), (
+      previous,
+      next,
+    ) {
+      if (next) {
+        _navHideController.reverse(); // Hide
+      } else {
+        _navHideController.forward(); // Show
+      }
+    });
+
+    // Nudge the Breathe tab with a one-shot sonar ping whenever the
+    // selected pattern changes, wherever that happens (home, library...),
+    // so the user notices there's now something new to go breathe.
+    ref.listen<BreathingPattern>(
+      breathPageProvider.select((s) => s.selectedPattern),
+      (previous, next) {
+        if (previous != null && previous.name != next.name) {
+          _breathePingController.forward(from: 0);
+        }
+      },
+    );
+
+    final currentTab = ref.watch(mainScaffoldTabProvider);
+    final filterTags = ref.watch(
+      breathPageProvider.select((s) => s.filterTags),
+    );
+    final activeFilter = filterTags.isNotEmpty ? filterTags.first : null;
+
+    return Scaffold(
+      extendBody: true,
+      appBar: AppBar(
+        animateColor: true,
+        title: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'co',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextSpan(
+                text: 'AIR',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+              TextSpan(
+                text: 'ence',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          if (currentTab == 1)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final tag in PatternTag.values)
+                      if (activeFilter == null || activeFilter == tag)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: PatternTagIcon(
+                            tag,
+                            expanded: activeFilter == tag,
+                            onTap: activeFilter == tag
+                                ? () => ref
+                                      .read(breathPageProvider.notifier)
+                                      .setFilterTags(const [])
+                                : () => ref
+                                      .read(breathPageProvider.notifier)
+                                      .setFilterTags([tag]),
+                          ),
+                        ),
+                  ],
+                ),
               ),
             ),
-            TextSpan(
-              text: 'AIR',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w300,
-              ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          AnimatedBackdrop(animation: _pageAnimation),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, animation) {
+              final isEntering = switch (child.key) {
+                ValueKey<int>(:final int value) => value == _currentIndex,
+                _ => false,
+              };
+              if (isEntering) {
+                final enterTween = _getEnterTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    enterTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              } else {
+                final exitTween = _getExitTween();
+                return SlideTransition(
+                  position: animation.drive(
+                    exitTween.chain(CurveTween(curve: Curves.easeInOut)),
+                  ),
+                  child: child,
+                );
+              }
+            },
+            child: Container(
+              key: ValueKey<int>(_currentIndex),
+              child:
+                  _pages.elementAtOrNull(_currentIndex) ?? const HomePage(),
             ),
-            TextSpan(
-              text: 'ence',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontWeight: FontWeight.bold,
+          ),
+        ],
+      ),
+      bottomNavigationBar: SizeTransition(
+        sizeFactor: Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(parent: _navHideAnimation, curve: Curves.easeInOut),
+        ),
+        alignment: AlignmentGeometry.bottomCenter,
+        child: NotchedNavBar(
+          currentIndex: currentTab,
+          // type: BottomNavigationBarType.fixed,
+          onTap: _onItemTapped,
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.air),
+              label: 'Patterns',
+            ),
+            BottomNavigationBarItem(
+              icon: NavPingIcon(
+                animation: _breathePingController,
+                icon: Icons.play_circle_fill,
               ),
+              label: 'Breathe',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
             ),
           ],
         ),
       ),
-    ),
-    body: Stack(
-      children: [
-        AnimatedBackdrop(animation: _animation),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (child, animation) {
-            final isEntering = switch (child.key) {
-              ValueKey<int>(:final int value) => value == _currentIndex,
-              _ => false,
-            };
-            if (isEntering) {
-              final enterTween = _getEnterTween();
-              return SlideTransition(
-                position: animation.drive(
-                  enterTween.chain(CurveTween(curve: Curves.easeInOut)),
-                ),
-                child: child,
-              );
-            } else {
-              final exitTween = _getExitTween();
-              return SlideTransition(
-                position: animation.drive(
-                  exitTween.chain(CurveTween(curve: Curves.easeInOut)),
-                ),
-                child: child,
-              );
-            }
-          },
-          child: Container(
-            key: ValueKey<int>(_currentIndex),
-            child: _pages.elementAtOrNull(_currentIndex) ?? const BreathePage(),
-          ),
-        ),
-      ],
-    ),
-    bottomNavigationBar: BottomNavigationBar(
-      currentIndex: _currentIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: _onItemTapped,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.air), label: 'Patterns'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.play_circle_fill),
-          label: 'Breathe',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-      ],
-    ),
-  );
+    );
+  }
 }

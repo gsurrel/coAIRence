@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:coairence/data/services/breath_synth_service.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -16,70 +17,73 @@ class SettingsPage extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
       error: (e, _) => Center(child: Text('Error loading settings: $e')),
       data: (settings) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  'Sensory Feedback',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.primary),
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  title: const Text('Sound Effects'),
-                  subtitle: const Text(
-                    'Synthesized ambient tones during breathing',
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            8,
+            8,
+            8,
+            MediaQuery.of(context).padding.bottom,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  Text(
+                    'Sensory Feedback',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
-                  value: settings.sfxEnabled,
-                  secondary: const Icon(Icons.music_note_rounded),
-                  onChanged: (value) {
-                    unawaited(
-                      ref
-                          .read(settingsProvider.notifier)
-                          .setSfxEnabled(enabled: value),
-                    );
-                  },
-                ),
-                SwitchListTile(
-                  title: const Text('Haptic Feedback'),
-                  subtitle: const Text(
-                    'Vibration cues at breath phase transitions',
-                  ),
-                  value: settings.hapticsEnabled,
-                  secondary: const Icon(Icons.vibration_rounded),
-                  onChanged: (value) {
-                    unawaited(
-                      ref
-                          .read(settingsProvider.notifier)
-                          .setHapticsEnabled(enabled: value),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  title: const Text('Volume'),
-                  subtitle: Slider(
-                    value: settings.volume,
-                    min: 0.1,
-                    divisions: 9,
-                    label: '${(settings.volume * 100).round()}%',
+                  SwitchListTile(
+                    title: const Text('Sound Effects'),
+                    subtitle: const Text(
+                      'Synthesized ambient tones during breathing',
+                    ),
+                    value: settings.sfxEnabled,
+                    secondary: const Icon(Icons.music_note_rounded),
                     onChanged: (value) {
                       unawaited(
-                        ref.read(settingsProvider.notifier).setVolume(value),
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setSfxEnabled(enabled: value),
                       );
                     },
                   ),
-                  leading: const Icon(Icons.volume_up_rounded),
-                ),
-              ],
+                  SwitchListTile(
+                    title: const Text('Haptic Feedback'),
+                    subtitle: const Text(
+                      'Vibration cues at breath phase transitions',
+                    ),
+                    value: settings.hapticsEnabled,
+                    secondary: const Icon(Icons.vibration_rounded),
+                    onChanged: (value) {
+                      unawaited(
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setHapticsEnabled(enabled: value),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Volume'),
+                    subtitle: Slider(
+                      value: settings.volume,
+                      min: 0.1,
+                      divisions: 9,
+                      label: '${(settings.volume * 100).round()}%',
+                      onChanged: (value) {
+                        unawaited(
+                          ref.read(settingsProvider.notifier).setVolume(value),
+                        );
+                      },
+                    ),
+                    leading: const Icon(Icons.volume_up_rounded),
+                  ),
+                ],
+              ),
             ),
           ),
         );

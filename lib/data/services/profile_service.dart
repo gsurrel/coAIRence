@@ -93,6 +93,18 @@ class ProfileService {
 
   Future<List<ExerciseSession>> getHistory() => _repository.getRecentSessions();
 
+  Future<String?> getMostUsedPatternName() async {
+    final sessions = await _repository.getRecentSessions(limit: 12);
+    if (sessions.isEmpty) return null;
+
+    final counts = <String, int>{};
+    for (final session in sessions) {
+      counts[session.patternName] = (counts[session.patternName] ?? 0) + 1;
+    }
+
+    return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  }
+
   Future<List<AchievementProgress>> getAchievements() async {
     final stats = await getStats();
     final distinctPatterns = await _repository.getDistinctPatternCount();

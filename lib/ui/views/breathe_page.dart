@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/services/breath_synth_service.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
 import 'package:coairence/ui/widgets/breath_pattern_backdrop.dart';
@@ -19,6 +22,14 @@ class BreathePage extends ConsumerStatefulWidget {
 class _BreathePageState extends ConsumerState<BreathePage> {
   int _repetitions = 5;
   double _speedMultiplier = 1;
+  BreathSynthService? _synth;
+
+  @override
+  void initState() {
+    super.initState();
+    _synth = ref.read(breathSynthServiceProvider);
+    unawaited(_synth?.initialize());
+  }
 
   void _updateRepetitions(int value) => setState(() => _repetitions = value);
 
@@ -27,12 +38,10 @@ class _BreathePageState extends ConsumerState<BreathePage> {
 
   @override
   Widget build(BuildContext context) {
-    final breathePageState = ref.watch(breathPageProvider);
-    final toggleShowButton = ref
-        .read(breathPageProvider.notifier)
-        .toggleShowButton;
-    final pattern = breathePageState.pattern;
-    final showButton = breathePageState.showButton;
+    final state = ref.watch(breathPageProvider);
+    final notifier = ref.read(breathPageProvider.notifier);
+    final pattern = state.pattern;
+    final showButton = state.showButton;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -43,18 +52,26 @@ class _BreathePageState extends ConsumerState<BreathePage> {
             duration: const Duration(milliseconds: 500),
             child: showButton
                 ? _PreStartOverlay(
+                    key: const ValueKey('pre-start'),
                     pattern: pattern,
                     repetitions: _repetitions,
                     onRepetitionsChanged: _updateRepetitions,
                     speedMultiplier: _speedMultiplier,
                     onSpeedMultiplierChanged: _updateSpeedMultiplier,
-                    onStart: toggleShowButton,
+                    onStart: () {
+                      unawaited(_synth?.start());
+                      notifier.toggleShowButton();
+                    },
                   )
                 : BreathGuide(
+                    key: const ValueKey('exercise'),
                     pattern: pattern,
                     totalRepetitions: _repetitions,
                     speedMultiplier: _speedMultiplier,
-                    onExerciseCompleted: toggleShowButton,
+                    onExerciseCompleted: () async {
+                      await _synth?.stop();
+                      notifier.toggleShowButton();
+                    },
                   ),
           ),
         ),
@@ -63,11 +80,7 @@ class _BreathePageState extends ConsumerState<BreathePage> {
   }
 }
 
-/// Everything shown before the exercise starts: the pattern shape as a
-/// backdrop (rendered identically to how [BreathGuide] renders it during
-/// the exercise), the pattern's info (name/goal/badges), the
-/// repetitions/speed controls, and the start button. All hidden once the
-/// exercise begins.
+/// Everything shown before the exercise starts.
 class _PreStartOverlay extends StatelessWidget {
   const _PreStartOverlay({
     required this.pattern,
@@ -76,6 +89,7 @@ class _PreStartOverlay extends StatelessWidget {
     required this.speedMultiplier,
     required this.onSpeedMultiplierChanged,
     required this.onStart,
+    super.key,
   });
 
   final BreathingPattern pattern;

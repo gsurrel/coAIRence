@@ -1,9 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
 /// Controls for customizing an upcoming breathing exercise: how many
-/// repetitions to run, and how fast to run them.
+/// repetitions to run and how fast to run them.
 ///
 /// Shown before the exercise starts; hidden once it begins.
+/// Sensory feedback (SFX/haptics) settings are managed in the Settings page.
 class ExerciseConfigControls extends StatelessWidget {
   const ExerciseConfigControls({
     required this.repetitions,

@@ -12,12 +12,11 @@ class BreathesLibraryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final breathePageState = ref.watch(breathPageProvider);
-    final patterns = breathePageState.patterns;
-    final selectedPatternIndex = breathePageState.selectedPatternIndex;
+    final state = ref.watch(breathPageProvider);
+    final patterns = state.patterns;
+    final selectedPatternIndex = state.selectedPatternIndex;
 
     return GridView.builder(
-      // Responsive grid: adapts column count based on screen width
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 320,
         childAspectRatio: 0.45,

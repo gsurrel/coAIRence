@@ -11,6 +11,7 @@ class BreathGuide extends StatelessWidget {
     required this.totalRepetitions,
     required this.onExerciseCompleted,
     this.speedMultiplier = 1.0,
+    this.isPreview = false,
     super.key,
   });
 
@@ -19,18 +20,21 @@ class BreathGuide extends StatelessWidget {
   final VoidCallback onExerciseCompleted;
   final double speedMultiplier;
 
+  /// When true, the guide runs the visual animation only, without
+  /// initializing audio synthesis or haptics. Used for library card previews.
+  final bool isPreview;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Backdrop showing the full breathing pattern.
         BreathPatternBackdrop(pattern: pattern),
-        // Animated widgets.
         BreathAnimationController(
           pattern: pattern,
           totalRepetitions: totalRepetitions,
           onExerciseCompleted: onExerciseCompleted,
           speedMultiplier: speedMultiplier,
+          audioEnabled: !isPreview,
           child:
               (
                 context,
@@ -40,7 +44,6 @@ class BreathGuide extends StatelessWidget {
                 getCurrentBreathMode,
               ) => Stack(
                 children: [
-                  // The active animation on top.
                   RepaintBoundary(
                     child: BreathCurve(
                       cycleProgress: getCycleProgress(),
@@ -48,11 +51,11 @@ class BreathGuide extends StatelessWidget {
                       mode: getCurrentBreathMode(),
                     ),
                   ),
-                  // Countdown text.
-                  BreathCountdown(
-                    totalRepetitions: totalRepetitions,
-                    getCurrentRepetition: getCurrentRepetition,
-                  ),
+                  if (!isPreview)
+                    BreathCountdown(
+                      totalRepetitions: totalRepetitions,
+                      getCurrentRepetition: getCurrentRepetition,
+                    ),
                 ],
               ),
         ),

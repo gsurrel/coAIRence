@@ -2,26 +2,28 @@ import 'dart:async';
 
 import 'package:coairence/data/models/breath_step.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/services/breath_synth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-class BreathAnimationController extends StatefulWidget {
+class BreathAnimationController extends ConsumerStatefulWidget {
   const BreathAnimationController({
     required this.pattern,
     required this.totalRepetitions,
     required this.onExerciseCompleted,
     required this.child,
     this.speedMultiplier = 1.0,
+    this.audioEnabled = true,
     super.key,
   });
 
   final BreathingPattern pattern;
   final int totalRepetitions;
   final VoidCallback onExerciseCompleted;
-
-  /// Scales the pace of the exercise. `1.0` follows the pattern's natural
-  /// timing; `> 1.0` runs faster, `< 1.0` runs slower.
   final double speedMultiplier;
+  final bool audioEnabled;
+
   final Widget Function(
     BuildContext,
     double Function() getCycleProgress,
@@ -32,11 +34,12 @@ class BreathAnimationController extends StatefulWidget {
   child;
 
   @override
-  State<BreathAnimationController> createState() =>
+  ConsumerState<BreathAnimationController> createState() =>
       _BreathAnimationControllerState();
 }
 
-class _BreathAnimationControllerState extends State<BreathAnimationController>
+class _BreathAnimationControllerState
+    extends ConsumerState<BreathAnimationController>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Duration cycleDuration;
@@ -45,6 +48,7 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
   @override
   void initState() {
     super.initState();
+
     cycleDuration = widget.pattern.steps.fold<Duration>(
       Duration.zero,
       (prev, step) => prev + step.duration,
@@ -57,12 +61,30 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
 
     _controller = AnimationController(vsync: this, duration: totalDuration);
 
-    unawaited(WakelockPlus.enable());
+    if (widget.audioEnabled) {
+      unawaited(WakelockPlus.enable());
+
+      // The synth drives its own wall-clock timer for the whole exercise
+      // (see BreathSynthService.startCycle) instead of being pushed
+      // per-frame from this controller — that keeps sound/haptics running
+      // smoothly even if the app is backgrounded and Flutter's animation
+      // ticks pause.
+      unawaited(
+        ref
+            .read(breathSynthServiceProvider)
+            .startCycle(
+              pattern: widget.pattern,
+              totalRepetitions: widget.totalRepetitions,
+              speedMultiplier: widget.speedMultiplier,
+            ),
+      );
+    }
 
     unawaited(
-      _controller.forward().whenComplete(() {
+      _controller.forward().whenComplete(() async {
         if (getCurrentRepetition() >= widget.totalRepetitions) {
           _controller.stop();
+          // Do NOT stop synth here — it persists across exercises
           widget.onExerciseCompleted();
         }
       }),
@@ -71,13 +93,16 @@ class _BreathAnimationControllerState extends State<BreathAnimationController>
 
   @override
   void dispose() {
-    unawaited(WakelockPlus.disable());
+    // Do NOT stop synth — it persists
+    if (widget.audioEnabled) {
+      unawaited(WakelockPlus.disable());
+    }
     _controller.dispose();
     super.dispose();
   }
 
   double getCycleProgress() =>
-      (_controller.value * widget.totalRepetitions) % 1.0;
+      (_controller.value * widget.totalRepetitions) % 1;
 
   double getCurrentBreathPercentage() =>
       widget.pattern.getBreathPercentage(getCycleProgress());

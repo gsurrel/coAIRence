@@ -4,4 +4,4 @@ export KEYSTORE=/path/to/your.jks
 export KEY=your-alias
 
 cd android
-./gradlew bundleProdRelease
+./gradlew assembleProdRelease

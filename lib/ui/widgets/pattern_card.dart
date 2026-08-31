@@ -1,6 +1,6 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
-import 'package:coairence/ui/theme/pattern_tag_style.dart';
 import 'package:coairence/ui/widgets/breath_guide.dart';
+import 'package:coairence/ui/widgets/pattern_tag_icon.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A selectable card previewing a [BreathingPattern]: name, live preview
@@ -90,17 +90,7 @@ class _CardFooter extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 4,
           children: pattern.tags.map((tag) {
-            final tagColor = tag.color(theme.colorScheme);
-            final tagOnColor = tag.onColor(theme.colorScheme);
-
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: tagColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(tag.icon, size: 16, color: tagOnColor),
-            );
+            return PatternTagIcon(tag);
           }).toList(),
         ),
       ],

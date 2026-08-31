@@ -1,0 +1,10 @@
+coAIRence est une app pour le biofeedback de variabilité de la fréquence cardiaque (HRVB), également appelé cohérence cardiaque ou respiration lente rythmée. Cette pratique fondée sur des preuves aide à réduire le stress, améliorer l'équilibre émotionnel et favoriser le bien-être général en s'appuyant sur l'arythmie sinusale respiratoire (ASR).
+
+Fonctionnalités :
+- Guides Visuels : Suivez des animations douces et apaisantes conçues pour vous aider à rythmer votre respiration sans effort.
+- Modèles Personnalisables : Ajustez les durées et répétitions des exercices selon vos besoins, ou explorez la bibliothèque d'exercices intégrée.
+- Suivi de Progression : Surveillez votre pratique grâce à des statistiques détaillées, un historique des sessions et des succès à débloquer.
+- Concentration et Détente : Profitez d'une interface minimaliste conçue pour vous aider à rester centré et calme.
+- 100% Libre et Open Source : Aucune publicité, aucun pistage, juste le plaisir de respirer.
+
+Si c'était une startup, cette description finirait avec une accroche comme "Commencez dès aujourd'hui votre voyage vers une meilleure santé cardiaque et une clarté mentale accrue avec coAIRence !"

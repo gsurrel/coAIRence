@@ -1,0 +1,17 @@
+#include: package:flutter_lints/flutter.yaml
+analyzer:
+  errors:
+    lines_longer_than_80_chars: ignore
+    public_member_api_docs: ignore
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+include: package:very_good_analysis/analysis_options.yaml
+
+linter:
+  rules:

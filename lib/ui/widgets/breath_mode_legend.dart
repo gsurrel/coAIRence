@@ -27,6 +27,7 @@ class BreathModeLegend extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      spacing: 8,
       children: [
         Text(
           'Shape guide',
@@ -34,7 +35,6 @@ class BreathModeLegend extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 8),
         Wrap(
           alignment: WrapAlignment.center,
           spacing: 20,

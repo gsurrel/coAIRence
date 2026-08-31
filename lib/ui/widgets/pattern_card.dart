@@ -46,9 +46,9 @@ class PatternCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 12,
             children: [
               _CardHeader(pattern: pattern, onShowDetails: onShowDetails),
-              const SizedBox(height: 12),
               Expanded(
                 child: Center(
                   child: BreathGuide(
@@ -59,7 +59,6 @@ class PatternCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
               _CardFooter(pattern: pattern),
             ],
           ),
@@ -79,6 +78,7 @@ class _CardFooter extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
       children: [
         Text(
           _formatDuration(pattern.totalDuration),
@@ -86,7 +86,6 @@ class _CardFooter extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 4,

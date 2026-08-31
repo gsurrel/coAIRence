@@ -1,41 +1,31 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
+import 'package:coairence/ui/widgets/shader_backdrop.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// Draws a cached, pre-rendered snapshot of the shader instead of
+/// re-executing the fragment shader. `image` is produced by
+/// [ShaderBackdrop]'s snapshot capture (taken once, right after a page
+/// transition settles) and reused for every frame while the backdrop is
+/// idle — so this painter's per-frame cost is a single image blit, not a
+/// 45-iteration-per-pixel shader.
 class ShaderPainter extends CustomPainter {
-  ShaderPainter({
-    required this.shader,
-    required this.fullSize,
-    required this.animationValue,
-  });
+  ShaderPainter({required this.image, required this.fullSize});
 
-  static const int _uWidth = 0;
-  static const int _uHeight = 1;
-  static const int _uAngle = 2;
-
-  final FragmentShader shader;
+  final ui.Image image;
   final Size fullSize;
-  final double animationValue;
-  final Paint _paint = Paint();
 
   @override
   void paint(Canvas canvas, Size size) {
-    shader
-      ..setFloat(_uWidth, fullSize.width)
-      ..setFloat(_uHeight, fullSize.height)
-      ..setFloat(_uAngle, 90 + animationValue / 2);
-
-    _paint.shader = shader;
-
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
-      _paint,
+    paintImage(
+      canvas: canvas,
+      rect: Rect.fromLTWH(0, 0, fullSize.width, fullSize.height),
+      image: image,
+      fit: BoxFit.fill,
     );
   }
 
   @override
-  bool shouldRepaint(covariant ShaderPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue ||
-        oldDelegate.shader != shader;
-  }
+  bool shouldRepaint(covariant ShaderPainter oldDelegate) =>
+      oldDelegate.image != image || oldDelegate.fullSize != fullSize;
 }

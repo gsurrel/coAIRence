@@ -28,7 +28,7 @@ class BreathGuide extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        BreathPatternBackdrop(pattern: pattern),
+        RepaintBoundary(child: BreathPatternBackdrop(pattern: pattern)),
         BreathAnimationController(
           pattern: pattern,
           totalRepetitions: totalRepetitions,
@@ -52,9 +52,11 @@ class BreathGuide extends StatelessWidget {
                     ),
                   ),
                   if (!isPreview)
-                    BreathCountdown(
-                      totalRepetitions: totalRepetitions,
-                      getCurrentRepetition: getCurrentRepetition,
+                    RepaintBoundary(
+                      child: BreathCountdown(
+                        totalRepetitions: totalRepetitions,
+                        getCurrentRepetition: getCurrentRepetition,
+                      ),
                     ),
                 ],
               ),

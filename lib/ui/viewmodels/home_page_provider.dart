@@ -1,4 +1,5 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

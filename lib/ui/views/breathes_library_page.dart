@@ -79,6 +79,7 @@ class BreathesLibraryPage extends ConsumerWidget {
         context: context,
         useSafeArea: true,
         showDragHandle: true,
+        isScrollControlled: true,
         builder: (context) => PatternDetailsSheet(
           pattern: pattern,
           onUsePattern: () {

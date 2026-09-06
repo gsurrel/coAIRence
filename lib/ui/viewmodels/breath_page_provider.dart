@@ -1,5 +1,6 @@
 import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/data/services/breathe_service.dart';
 import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:coairence/ui/viewmodels/home_page_provider.dart';

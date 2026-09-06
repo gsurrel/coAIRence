@@ -112,50 +112,21 @@ class _CardHeader extends StatelessWidget {
   final VoidCallback onShowDetails;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Icon(pattern.icon, color: theme.colorScheme.primary, size: 24),
-        _DifficultyIndicator(pattern: pattern),
-        IconButton(
-          icon: const Icon(Icons.info_outline),
-          onPressed: onShowDetails,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          tooltip: 'Details',
-          visualDensity: const VisualDensity(
-            horizontal: VisualDensity.minimumDensity,
-            vertical: VisualDensity.minimumDensity,
-          ),
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Icon(pattern.icon, color: pattern.accentColor, size: 24),
+      IconButton(
+        icon: const Icon(Icons.info_outline),
+        onPressed: onShowDetails,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        tooltip: 'Details',
+        visualDensity: const VisualDensity(
+          horizontal: VisualDensity.minimumDensity,
+          vertical: VisualDensity.minimumDensity,
         ),
-      ],
-    );
-  }
-}
-
-class _DifficultyIndicator extends StatelessWidget {
-  const _DifficultyIndicator({required this.pattern});
-
-  final BreathingPattern pattern;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (index) {
-        return Icon(
-          index < pattern.difficulty
-              ? Icons.star_rounded
-              : Icons.star_border_rounded,
-          size: 16,
-          color: index < pattern.difficulty
-              ? theme.colorScheme.tertiary
-              : theme.colorScheme.outlineVariant,
-        );
-      }),
-    );
-  }
+      ),
+    ],
+  );
 }

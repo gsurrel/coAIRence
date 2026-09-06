@@ -1,4 +1,5 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/ui/theme/pattern_tag_style.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/viewmodels/home_page_provider.dart';
@@ -165,16 +166,13 @@ class _RecommendationCard extends StatelessWidget {
   final String subtitle;
   final BreathingPattern? pattern;
   final VoidCallback? onTap;
-  final bool isLoading; // ← NEW
-
-  bool get _isPlaceholder => isLoading && pattern == null;
-  bool get _shouldRender => isLoading || pattern != null; // ← KEY LOGIC
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     // If not loading AND no pattern → don't render at all.
     // AnimatedSize in the PARENT handles the smooth collapse.
-    if (!_shouldRender) return const SizedBox.shrink();
+    if (!isLoading && pattern == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
 
@@ -196,22 +194,23 @@ class _RecommendationCard extends StatelessWidget {
                     duration: const Duration(milliseconds: 300),
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
-                    child: _isPlaceholder
-                        ? Container(
-                            key: const ValueKey('placeholder-icon'),
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          )
-                        : Icon(
-                            key: ValueKey('real-icon-${pattern!.name}'),
-                            pattern!.icon,
-                            size: 32,
-                            color: theme.colorScheme.primary,
-                          ),
+                    child: switch (pattern) {
+                      final BreathingPattern pattern => Icon(
+                        key: ValueKey('real-icon-${pattern.name}'),
+                        pattern.icon,
+                        size: 32,
+                        color: pattern.accentColor,
+                      ),
+                      null => Container(
+                        key: const ValueKey('placeholder-icon'),
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -230,9 +229,11 @@ class _RecommendationCard extends StatelessWidget {
                             subtitle,
                             key: ValueKey(subtitle),
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: _isPlaceholder
-                                  ? theme.colorScheme.surfaceContainerHighest
-                                  : theme.colorScheme.outline,
+                              color: switch (pattern) {
+                                BreathingPattern() => theme.colorScheme.outline,
+                                null =>
+                                  theme.colorScheme.surfaceContainerHighest,
+                              },
                             ),
                           ),
                         ),
@@ -241,70 +242,72 @@ class _RecommendationCard extends StatelessWidget {
                   ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    child: _isPlaceholder
-                        ? Container(
-                            key: const ValueKey('placeholder-play'),
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        : Icon(
-                            key: const ValueKey('real-play'),
-                            Icons.play_circle_fill,
-                            size: 48,
-                            color: theme.colorScheme.primary,
-                          ),
+                    child: switch (pattern) {
+                      BreathingPattern() => Icon(
+                        key: const ValueKey('real-play'),
+                        Icons.play_circle_fill,
+                        size: 48,
+                        color: theme.colorScheme.primary,
+                      ),
+                      null => Container(
+                        key: const ValueKey('placeholder-play'),
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    },
                   ),
                 ],
               ),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
-                child: _isPlaceholder
-                    ? Column(
-                        key: const ValueKey('placeholder-body'),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 8,
-                        children: [
-                          Container(
-                            width: 160,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        key: ValueKey('real-body-${pattern!.name}'),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 4,
-                        children: [
-                          Text(
-                            pattern!.name,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            pattern!.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+                child: switch (pattern) {
+                  BreathingPattern() => Column(
+                    key: ValueKey('real-body-${pattern!.name}'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        pattern!.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                      Text(
+                        pattern!.shortDescription,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                  null => Column(
+                    key: const ValueKey('placeholder-body'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      Container(
+                        width: 160,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
+                  ),
+                },
               ),
             ],
           ),

@@ -1,4 +1,5 @@
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/ui/viewmodels/breath_page_provider.dart';
 import 'package:coairence/ui/viewmodels/main_scaffold_provider.dart';
 import 'package:coairence/ui/views/animated_backdrop.dart';

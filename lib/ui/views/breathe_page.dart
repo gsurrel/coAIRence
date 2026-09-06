@@ -35,8 +35,9 @@ class _BreathePageState extends ConsumerState<BreathePage> {
     final notifier = ref.read(breathPageProvider.notifier);
     final pattern = state.selectedPattern;
     final showButton = state.showButton;
-    final repetitions = state.repetitions;
+    final targetDurationMinutes = state.targetDurationMinutes;
     final speedMultiplier = state.speedMultiplier;
+    final computedRepetitions = state.computedRepetitions;
 
     return PopScope(
       // While an exercise is running, swallow the back navigation so we can
@@ -59,10 +60,12 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                   ? _PreStartOverlay(
                       key: const ValueKey('pre-start'),
                       pattern: pattern,
-                      repetitions: repetitions,
-                      onRepetitionsChanged: notifier.setRepetitions,
+                      targetDurationMinutes: targetDurationMinutes,
+                      onTargetDurationChanged:
+                          notifier.setTargetDurationMinutes,
                       speedMultiplier: speedMultiplier,
                       onSpeedMultiplierChanged: notifier.setSpeedMultiplier,
+                      computedRepetitions: computedRepetitions,
                       onStart: () {
                         unawaited(_synth?.start());
                         notifier.toggleShowButton();
@@ -71,7 +74,7 @@ class _BreathePageState extends ConsumerState<BreathePage> {
                   : BreathGuide(
                       key: const ValueKey('exercise'),
                       pattern: pattern,
-                      totalRepetitions: repetitions,
+                      totalRepetitions: computedRepetitions,
                       speedMultiplier: speedMultiplier,
                       onExerciseCompleted: () async {
                         final messenger = ScaffoldMessenger.of(context);
@@ -116,19 +119,21 @@ class _BreathePageState extends ConsumerState<BreathePage> {
 class _PreStartOverlay extends StatelessWidget {
   const _PreStartOverlay({
     required this.pattern,
-    required this.repetitions,
-    required this.onRepetitionsChanged,
+    required this.targetDurationMinutes,
+    required this.onTargetDurationChanged,
     required this.speedMultiplier,
     required this.onSpeedMultiplierChanged,
+    required this.computedRepetitions,
     required this.onStart,
     super.key,
   });
 
   final BreathingPattern pattern;
-  final int repetitions;
-  final ValueChanged<int> onRepetitionsChanged;
+  final int targetDurationMinutes;
+  final ValueChanged<int> onTargetDurationChanged;
   final double speedMultiplier;
   final ValueChanged<double> onSpeedMultiplierChanged;
+  final int computedRepetitions;
   final VoidCallback onStart;
 
   @override
@@ -147,10 +152,11 @@ class _PreStartOverlay extends StatelessWidget {
               children: [
                 PatternInfoPanel(pattern: pattern),
                 ExerciseConfigControls(
-                  repetitions: repetitions,
-                  onRepetitionsChanged: onRepetitionsChanged,
+                  targetDurationMinutes: targetDurationMinutes,
+                  onTargetDurationChanged: onTargetDurationChanged,
                   speedMultiplier: speedMultiplier,
                   onSpeedMultiplierChanged: onSpeedMultiplierChanged,
+                  computedRepetitions: computedRepetitions,
                 ),
                 BreatheButton(onPressed: onStart),
               ],

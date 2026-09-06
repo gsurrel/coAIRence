@@ -18,7 +18,7 @@ class BreathPageState {
     required this.patterns,
     required this.selectedPattern,
     required this.showButton,
-    required this.repetitions,
+    required this.targetDurationMinutes,
     required this.speedMultiplier,
   });
 
@@ -28,13 +28,28 @@ class BreathPageState {
   final BreathingPattern selectedPattern;
   final bool showButton;
 
-  /// How many cycles the next/current exercise should run for.
-  final int repetitions;
+  /// Target exercise duration in minutes (user-selected via slider).
+  final int targetDurationMinutes;
 
   /// Playback-speed multiplier applied to the pattern's step durations.
   final double speedMultiplier;
 
   bool get isExercising => !showButton;
+
+  /// Derived number of cycles based on target duration, speed, and pattern length.
+  /// Always at least 1.
+  int get computedRepetitions {
+    final cycleMs = selectedPattern.totalDuration.inMilliseconds;
+    if (cycleMs <= 0) return 1;
+
+    final effectiveSpeed = speedMultiplier > 0 ? speedMultiplier : 1.0;
+    final targetMs = targetDurationMinutes * 60 * 1000;
+
+    // At higher speeds, each cycle takes less real-time, so we fit more cycles.
+    // Real time per cycle = cycleMs / effectiveSpeed
+    final reps = (targetMs * effectiveSpeed / cycleMs).round();
+    return reps < 1 ? 1 : reps;
+  }
 
   BreathPageState copyWith({
     List<BreathingPattern>? allPatterns,
@@ -42,7 +57,7 @@ class BreathPageState {
     List<BreathingPattern>? patterns,
     BreathingPattern? pattern,
     bool? showButton,
-    int? repetitions,
+    int? targetDurationMinutes,
     double? speedMultiplier,
   }) => BreathPageState(
     allPatterns: allPatterns ?? this.allPatterns,
@@ -50,7 +65,7 @@ class BreathPageState {
     patterns: patterns ?? this.patterns,
     selectedPattern: pattern ?? selectedPattern,
     showButton: showButton ?? this.showButton,
-    repetitions: repetitions ?? this.repetitions,
+    targetDurationMinutes: targetDurationMinutes ?? this.targetDurationMinutes,
     speedMultiplier: speedMultiplier ?? this.speedMultiplier,
   );
 }
@@ -62,6 +77,14 @@ final breathPageProvider =
 
 class BreathPageNotifier extends Notifier<BreathPageState> {
   BreatheService get _service => ref.read(breatheServiceProvider);
+
+  /// Extracts the recommended duration from a pattern in whole minutes,
+  /// clamped to valid slider bounds. Falls back to 5 min if unset or invalid.
+  int _durationFromPattern(BreathingPattern pattern) {
+    final recommended = pattern.recommendedDuration;
+    if (recommended.inMinutes <= 0) return 5;
+    return recommended.inMinutes.clamp(2, 30);
+  }
 
   @override
   BreathPageState build() {
@@ -83,7 +106,7 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
       patterns: allPatterns,
       selectedPattern: initialPattern,
       showButton: true,
-      repetitions: 5,
+      targetDurationMinutes: _durationFromPattern(initialPattern),
       speedMultiplier: 1,
     );
   }
@@ -93,8 +116,12 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   }
 
   /// Select a pattern by identity. Works correctly regardless of current filter.
+  /// Resets target duration to the new pattern's recommended duration.
   void updateSelectedPattern(BreathingPattern pattern) {
-    state = state.copyWith(pattern: pattern);
+    state = state.copyWith(
+      pattern: pattern,
+      targetDurationMinutes: _durationFromPattern(pattern),
+    );
   }
 
   void setFilterTags(List<PatternTag> tags) {
@@ -106,8 +133,8 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
     state = state.copyWith(filterTags: tags, patterns: filtered);
   }
 
-  void setRepetitions(int value) {
-    state = state.copyWith(repetitions: value);
+  void setTargetDurationMinutes(int value) {
+    state = state.copyWith(targetDurationMinutes: value);
   }
 
   void setSpeedMultiplier(double value) {
@@ -121,7 +148,7 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
   /// can show a notification, so it stays out of the notifier.
   Future<List<AchievementDefinition>> completeExercise() async {
     final pattern = state.selectedPattern;
-    final repetitions = state.repetitions;
+    final repetitions = state.computedRepetitions;
     final safeSpeed = state.speedMultiplier > 0 ? state.speedMultiplier : 1.0;
 
     final profileService = ref.read(profileServiceProvider);

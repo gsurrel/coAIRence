@@ -1,5 +1,7 @@
 import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/exercise_session.dart';
+import 'package:coairence/data/models/result.dart';
+import 'package:coairence/data/repositories/safe_execution.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
@@ -80,25 +82,28 @@ class ProfileRepository {
     await db.insert('sessions', session.toMap());
   }
 
-  Future<List<ExerciseSession>> getRecentSessions({int limit = 50}) async {
-    if (_simulateSlowLoad) {
-      await Future<Null>.delayed(const Duration(seconds: 1));
-    }
-
-    final db = await database;
-    final maps = await db.rawQuery(
-      'SELECT * FROM sessions ORDER BY timestamp DESC LIMIT ?',
-      [limit],
-    );
-
-    return maps.map(ExerciseSession.fromMap).toList();
+  Future<Result<List<ExerciseSession>>> getRecentSessions({
+    int limit = 50,
+  }) async {
+    return SafeExecution.safe(() async {
+      if (_simulateSlowLoad) {
+        await Future<Null>.delayed(const Duration(seconds: 1));
+      }
+      final db = await database;
+      final maps = await db.rawQuery(
+        'SELECT * FROM sessions ORDER BY timestamp DESC LIMIT ?',
+        [limit],
+      );
+      return maps.map(ExerciseSession.fromMap).toList();
+    });
   }
 
   /// Returns all metrics needed by [AchievementMetric] in a single query.
   /// Keys match the SQL aliases consumed by the achievement evaluation layer.
-  Future<Map<String, dynamic>> getAggregateStats() async {
-    final db = await database;
-    final result = await db.rawQuery('''
+  Future<Result<Map<String, dynamic>>> getAggregateStats() async {
+    return SafeExecution.safe(() async {
+      final db = await database;
+      final result = await db.rawQuery('''
       SELECT
         COUNT(*) AS totalSessions,
         COALESCE(SUM(durationSeconds), 0) AS totalDurationSeconds,
@@ -109,7 +114,8 @@ class ProfileRepository {
       FROM sessions
     ''');
 
-    return result.first;
+      return result.first;
+    });
   }
 
   Future<List<DateTime>> getDistinctDates({int limit = 365}) async {

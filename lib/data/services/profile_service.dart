@@ -1,6 +1,7 @@
 import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/models/exercise_session.dart';
+import 'package:coairence/data/models/result.dart';
 import 'package:coairence/data/models/user_stats.dart';
 import 'package:coairence/data/repositories/profile_repository.dart';
 
@@ -90,25 +91,44 @@ class ProfileService {
     final longestStreak = await _repository.getLongestStreak();
     final currentStreak = _calculateCurrentStreak(dates);
 
-    return UserStats(
-      totalSessions: (aggregates['totalSessions'] as int?) ?? 0,
-      totalMinutes: ((aggregates['totalDurationSeconds'] as int?) ?? 0) ~/ 60,
-      totalCycles: (aggregates['totalCycles'] as int?) ?? 0,
-      morningSessions: (aggregates['morningSessions'] as int?) ?? 0,
-      distinctWeeks: (aggregates['distinctWeeks'] as int?) ?? 0,
-      distinctPatterns: (aggregates['distinctPatterns'] as int?) ?? 0,
-      currentStreak: currentStreak,
-      longestStreak: longestStreak,
-    );
+    return switch (aggregates) {
+      Success(value: final aggregates) => UserStats(
+        totalSessions: (aggregates['totalSessions'] as int?) ?? 0,
+        totalMinutes: ((aggregates['totalDurationSeconds'] as int?) ?? 0) ~/ 60,
+        totalCycles: (aggregates['totalCycles'] as int?) ?? 0,
+        morningSessions: (aggregates['morningSessions'] as int?) ?? 0,
+        distinctWeeks: (aggregates['distinctWeeks'] as int?) ?? 0,
+        distinctPatterns: (aggregates['distinctPatterns'] as int?) ?? 0,
+        currentStreak: currentStreak,
+        longestStreak: longestStreak,
+      ),
+      Failure() => const UserStats(
+        currentStreak: 0,
+        distinctPatterns: 0,
+        distinctWeeks: 0,
+        longestStreak: 0,
+        morningSessions: 0,
+        totalCycles: 0,
+        totalMinutes: 0,
+        totalSessions: 0,
+      ),
+    };
   }
 
-  Future<List<ExerciseSession>> getHistory() => _repository.getRecentSessions();
+  Future<List<ExerciseSession>> getHistory() async =>
+      switch (await _repository.getRecentSessions()) {
+        Success(value: final recentSessions) => recentSessions,
+        Failure() => [],
+      };
 
   /// Returns the stable ID of the most frequently practiced pattern
   /// in recent sessions. The caller should resolve this to a display name
   /// via the pattern catalog.
   Future<String?> getMostUsedPatternId() async {
-    final sessions = await _repository.getRecentSessions(limit: 12);
+    final sessions = switch (await _repository.getRecentSessions(limit: 12)) {
+      Success(value: final sessions) => sessions,
+      Failure() => <ExerciseSession>[],
+    };
     if (sessions.isEmpty) return null;
 
     final counts = <String, int>{};

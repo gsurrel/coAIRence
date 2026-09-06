@@ -153,7 +153,7 @@ class BreathPageNotifier extends Notifier<BreathPageState> {
 
     final profileService = ref.read(profileServiceProvider);
     final newlyUnlocked = await profileService.logSession(
-      patternName: pattern.name,
+      patternId: pattern.id,
       duration: Duration(
         milliseconds:
             (pattern.totalDuration.inMilliseconds * repetitions / safeSpeed)

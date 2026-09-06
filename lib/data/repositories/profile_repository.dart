@@ -1,3 +1,4 @@
+import 'package:coairence/data/models/achievement.dart';
 import 'package:coairence/data/models/exercise_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -17,7 +18,6 @@ class ProfileRepository {
     };
 
     _database = database;
-
     return database;
   }
 
@@ -25,71 +25,55 @@ class ProfileRepository {
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, 'profile.db');
 
+    // Uncomment during active schema development to guarantee a fresh DB
+    // if (kDebugMode) {
+    //   await deleteDatabase(path);
+    // }
+
     return openDatabase(
       path,
-      version: 3,
+      version: 1,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    await _createTables(db);
-  }
-
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await _createAchievementsTable(db);
-    }
-    if (oldVersion < 3) {
-      await db.execute(
-        'ALTER TABLE sessions ADD COLUMN localHour INTEGER NOT NULL DEFAULT 0',
-      );
-      // Backfill existing rows with their actual local hour
-      await db.execute('''
-        UPDATE sessions SET localHour = CAST(
-          strftime('%H', datetime(timestamp, 'localtime')) AS INTEGER
-        )
-      ''');
-    }
-  }
-
-  Future<void> _createTables(Database db) async {
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS sessions (
+      CREATE TABLE sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        patternName TEXT NOT NULL,
+        patternId TEXT NOT NULL,
         timestamp TEXT NOT NULL,
         durationSeconds INTEGER NOT NULL,
         cyclesCompleted INTEGER NOT NULL,
-        distinctWeeks INTEGER DEFAULT NULL,
         localHour INTEGER NOT NULL
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS stats (
+      CREATE TABLE stats (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         longestStreak INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
-    await _createAchievementsTable(db);
-
-    await db.insert('stats', {
-      'id': 1,
-      'longestStreak': 0,
-    }, conflictAlgorithm: ConflictAlgorithm.ignore);
-  }
-
-  Future<void> _createAchievementsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS unlocked_achievements (
+      CREATE TABLE unlocked_achievements (
         achievementId TEXT PRIMARY KEY,
         unlockedAt TEXT NOT NULL
       )
     ''');
+
+    // Seed singleton stats row
+    await db.insert(
+      'stats',
+      {'id': 1, 'longestStreak': 0},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
+
+  // ---------------------------------------------------------------------------
+  // Sessions
+  // ---------------------------------------------------------------------------
 
   Future<void> insertSession(ExerciseSession session) async {
     final db = await database;
@@ -100,6 +84,7 @@ class ProfileRepository {
     if (_simulateSlowLoad) {
       await Future<Null>.delayed(const Duration(seconds: 1));
     }
+
     final db = await database;
     final maps = await db.rawQuery(
       'SELECT * FROM sessions ORDER BY timestamp DESC LIMIT ?',
@@ -109,15 +94,18 @@ class ProfileRepository {
     return maps.map(ExerciseSession.fromMap).toList();
   }
 
+  /// Returns all metrics needed by [AchievementMetric] in a single query.
+  /// Keys match the SQL aliases consumed by the achievement evaluation layer.
   Future<Map<String, dynamic>> getAggregateStats() async {
     final db = await database;
     final result = await db.rawQuery('''
       SELECT
-        COUNT(*) as totalSessions,
-        COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
-        COALESCE(SUM(cyclesCompleted), 0) as totalCycles,
-        SUM(CASE WHEN localHour BETWEEN 5 AND 8 THEN 1 ELSE 0 END) as morningSessions,
-        COUNT(DISTINCT strftime('%Y-W%W', timestamp)) as distinctWeeks
+        COUNT(*) AS totalSessions,
+        COALESCE(SUM(durationSeconds), 0) AS totalDurationSeconds,
+        COALESCE(SUM(cyclesCompleted), 0) AS totalCycles,
+        SUM(CASE WHEN localHour BETWEEN 5 AND 8 THEN 1 ELSE 0 END) AS morningSessions,
+        COUNT(DISTINCT strftime('%Y-W%W', timestamp)) AS distinctWeeks,
+        COUNT(DISTINCT patternId) AS distinctPatterns
       FROM sessions
     ''');
 
@@ -128,28 +116,22 @@ class ProfileRepository {
     final db = await database;
     final maps = await db.rawQuery(
       '''
-      SELECT DISTINCT DATE(timestamp) as dateStr
+      SELECT DISTINCT DATE(timestamp) AS dateStr
       FROM sessions
       ORDER BY dateStr DESC
       LIMIT ?
-    ''',
+      ''',
       [limit],
     );
 
     return maps
-        .map((map) => DateTime.parse('${map['dateStr']}T00:00:00Z'))
+        .map((m) => DateTime.parse('${m['dateStr']!}T00:00:00Z'))
         .toList();
   }
 
-  Future<int> getDistinctPatternCount() async {
-    final db = await database;
-    final result = await db.rawQuery('''
-      SELECT COUNT(DISTINCT patternName) as patternCount
-      FROM sessions
-    ''');
-
-    return (result.first['patternCount'] as int?) ?? 0;
-  }
+  // ---------------------------------------------------------------------------
+  // Stats
+  // ---------------------------------------------------------------------------
 
   Future<int> getLongestStreak() async {
     final db = await database;
@@ -160,7 +142,6 @@ class ProfileRepository {
     );
 
     if (result.isEmpty) return 0;
-
     return (result.first['longestStreak'] as int?) ?? 0;
   }
 
@@ -168,6 +149,10 @@ class ProfileRepository {
     final db = await database;
     await db.update('stats', {'longestStreak': streak}, where: 'id = 1');
   }
+
+  // ---------------------------------------------------------------------------
+  // Achievements
+  // ---------------------------------------------------------------------------
 
   Future<Map<String, DateTime>> getUnlockedAchievements() async {
     final db = await database;
@@ -190,16 +175,20 @@ class ProfileRepository {
     final unlockedAt = DateTime.now().toUtc().toIso8601String();
 
     final batch = db.batch();
-
     for (final id in achievementIds) {
-      batch.insert('unlocked_achievements', {
-        'achievementId': id,
-        'unlockedAt': unlockedAt,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      batch.insert(
+        'unlocked_achievements',
+        {'achievementId': id, 'unlockedAt': unlockedAt},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
     }
 
     await batch.commit(noResult: true);
   }
+
+  // ---------------------------------------------------------------------------
+  // Maintenance
+  // ---------------------------------------------------------------------------
 
   Future<void> clearAllData() async {
     final db = await database;

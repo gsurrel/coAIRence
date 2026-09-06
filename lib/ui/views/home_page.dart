@@ -57,7 +57,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 24,
               children: [
                 _StaggeredItem(
                   visible: _hasEntranceAnimated,
@@ -377,7 +376,13 @@ class _StaggeredItemState extends State<_StaggeredItem>
   Widget build(BuildContext context) {
     return SlideTransition(
       position: _slideAnimation,
-      child: FadeTransition(opacity: _opacityAnimation, child: widget.child),
+      child: FadeTransition(
+        opacity: _opacityAnimation,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

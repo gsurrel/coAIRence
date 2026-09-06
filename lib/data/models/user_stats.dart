@@ -1,37 +1,41 @@
 class UserStats {
   const UserStats({
-    this.totalSessions = 0,
-    this.totalMinutes = 0,
-    this.totalCycles = 0,
-    this.currentStreak = 0,
-    this.longestStreak = 0,
-    this.morningSessions = 0,
-    this.distinctWeeks = 0,
+    required this.currentStreak,
+    required this.distinctPatterns,
+    required this.distinctWeeks,
+    required this.longestStreak,
+    required this.morningSessions,
+    required this.totalCycles,
+    required this.totalMinutes,
+    required this.totalSessions,
   });
 
-  final int totalSessions;
-  final int totalMinutes;
-  final int totalCycles;
   final int currentStreak;
+  final int distinctPatterns;
+  final int distinctWeeks;
   final int longestStreak;
   final int morningSessions;
-  final int distinctWeeks;
+  final int totalCycles;
+  final int totalMinutes;
+  final int totalSessions;
 
   UserStats copyWith({
-    int? totalSessions,
-    int? totalMinutes,
-    int? totalCycles,
     int? currentStreak,
+    int? distinctPatterns,
+    int? distinctWeeks,
     int? longestStreak,
     int? morningSessions,
-    int? distinctWeeks,
+    int? totalCycles,
+    int? totalMinutes,
+    int? totalSessions,
   }) => UserStats(
-    totalSessions: totalSessions ?? this.totalSessions,
-    totalMinutes: totalMinutes ?? this.totalMinutes,
-    totalCycles: totalCycles ?? this.totalCycles,
     currentStreak: currentStreak ?? this.currentStreak,
+    distinctPatterns: distinctPatterns ?? this.distinctPatterns,
+    distinctWeeks: distinctWeeks ?? this.distinctWeeks,
     longestStreak: longestStreak ?? this.longestStreak,
     morningSessions: morningSessions ?? this.morningSessions,
-    distinctWeeks: distinctWeeks ?? this.distinctWeeks,
+    totalCycles: totalCycles ?? this.totalCycles,
+    totalMinutes: totalMinutes ?? this.totalMinutes,
+    totalSessions: totalSessions ?? this.totalSessions,
   );
 }

@@ -25,7 +25,7 @@ class SessionHistoryItem extends StatelessWidget {
         backgroundColor: theme.colorScheme.primaryContainer,
         child: Icon(Icons.air, color: theme.colorScheme.onPrimaryContainer),
       ),
-      title: Text(session.patternName, style: theme.textTheme.titleMedium),
+      title: Text(session.patternId, style: theme.textTheme.titleMedium),
       subtitle: Text(
         '${session.cyclesCompleted} cycles • ${duration.inMinutes}m ${duration.inSeconds % 60}s',
         style: theme.textTheme.bodySmall,

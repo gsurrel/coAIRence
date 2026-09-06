@@ -1,4 +1,5 @@
 import 'package:coairence/data/models/achievement.dart';
+import 'package:coairence/data/models/breathing_pattern.dart';
 import 'package:coairence/data/models/exercise_session.dart';
 import 'package:coairence/data/models/user_stats.dart';
 import 'package:coairence/data/repositories/profile_repository.dart';
@@ -34,6 +35,9 @@ class ProfileService {
     return streak;
   }
 
+  /// Maps an [AchievementMetric] to its current value using pre-fetched data.
+  /// [distinctPatterns] is now sourced from the same aggregate query as other
+  /// session-based metrics, avoiding a separate DB round-trip.
   int _achievementMetricValue(
     AchievementMetric metric,
     UserStats stats,
@@ -48,15 +52,19 @@ class ProfileService {
     AchievementMetric.distinctWeeks => stats.distinctWeeks,
   };
 
+  /// Logs a new exercise session and returns any newly unlocked achievements.
+  ///
+  /// [patternId] is the stable identifier from [BreathingPattern.id],
+  /// replacing the previous name-based lookup.
   Future<List<AchievementDefinition>> logSession({
-    required String patternName,
+    required String patternId,
     required Duration duration,
     required int cyclesCompleted,
   }) async {
     final now = DateTime.now();
 
     final session = ExerciseSession(
-      patternName: patternName,
+      patternId: patternId,
       timestamp: now,
       durationSeconds: duration.inSeconds,
       cyclesCompleted: cyclesCompleted,
@@ -86,6 +94,9 @@ class ProfileService {
       totalSessions: (aggregates['totalSessions'] as int?) ?? 0,
       totalMinutes: ((aggregates['totalDurationSeconds'] as int?) ?? 0) ~/ 60,
       totalCycles: (aggregates['totalCycles'] as int?) ?? 0,
+      morningSessions: (aggregates['morningSessions'] as int?) ?? 0,
+      distinctWeeks: (aggregates['distinctWeeks'] as int?) ?? 0,
+      distinctPatterns: (aggregates['distinctPatterns'] as int?) ?? 0,
       currentStreak: currentStreak,
       longestStreak: longestStreak,
     );
@@ -93,28 +104,32 @@ class ProfileService {
 
   Future<List<ExerciseSession>> getHistory() => _repository.getRecentSessions();
 
-  Future<String?> getMostUsedPatternName() async {
+  /// Returns the stable ID of the most frequently practiced pattern
+  /// in recent sessions. The caller should resolve this to a display name
+  /// via the pattern catalog.
+  Future<String?> getMostUsedPatternId() async {
     final sessions = await _repository.getRecentSessions(limit: 12);
     if (sessions.isEmpty) return null;
 
     final counts = <String, int>{};
     for (final session in sessions) {
-      counts[session.patternName] = (counts[session.patternName] ?? 0) + 1;
+      counts[session.patternId] = (counts[session.patternId] ?? 0) + 1;
     }
 
     return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   }
 
   Future<List<AchievementProgress>> getAchievements() async {
+    // Single call now provides all session-based metrics including
+    // distinctPatterns — no separate getDistinctPatternCount() needed.
     final stats = await getStats();
-    final distinctPatterns = await _repository.getDistinctPatternCount();
     final unlocked = await _repository.getUnlockedAchievements();
 
     return AchievementDefinitions.all.map((definition) {
       final current = _achievementMetricValue(
         definition.metric,
         stats,
-        distinctPatterns,
+        stats.distinctPatterns,
       );
 
       return AchievementProgress(
@@ -130,7 +145,6 @@ class ProfileService {
 
   Future<List<AchievementDefinition>> _evaluateAndUnlockAchievements() async {
     final stats = await getStats();
-    final distinctPatterns = await _repository.getDistinctPatternCount();
     final unlocked = await _repository.getUnlockedAchievements();
 
     final newlyUnlocked = <AchievementDefinition>[];
@@ -141,7 +155,7 @@ class ProfileService {
       final current = _achievementMetricValue(
         definition.metric,
         stats,
-        distinctPatterns,
+        stats.distinctPatterns,
       );
 
       if (current >= definition.target) {

@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/ui/viewmodels/data_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +25,7 @@ final homePageProvider = FutureProvider<HomePageState>((ref) async {
 
   final lastPattern = sessions.isEmpty
       ? null
-      : patterns.where((p) => p.name == sessions.first.patternName).firstOrNull;
+      : patterns.where((p) => p.name == sessions.first.patternId).firstOrNull;
 
   final mostUsedPattern = () {
     if (mostUsedName == null) return null;
@@ -31,20 +34,32 @@ final homePageProvider = FutureProvider<HomePageState>((ref) async {
   }();
 
   final suggestedPattern = () {
+    // Shuffle patterns for each category to add randomness
+    final now = DateTime.now();
+    final shuffledPatterns = List.of(patterns)
+      ..shuffle(Random(now.hour + now.day + now.weekday));
+
     final candidate = switch (DateTime.now().hour) {
       < 10 =>
-        patterns.where((p) => p.tags.contains(PatternTag.energy)).firstOrNull,
+        shuffledPatterns
+            .where((p) => p.tags.contains(PatternTag.energy))
+            .firstOrNull,
       >= 21 || < 5 =>
-        patterns.where((p) => p.tags.contains(PatternTag.sleep)).firstOrNull ??
-            patterns
+        shuffledPatterns
+                .where((p) => p.tags.contains(PatternTag.sleep))
+                .firstOrNull ??
+            shuffledPatterns
                 .where((p) => p.tags.contains(PatternTag.calming))
                 .firstOrNull,
       _ =>
-        patterns.where((p) => p.tags.contains(PatternTag.hrv)).firstOrNull ??
-            patterns
+        shuffledPatterns
+                .where((p) => p.tags.contains(PatternTag.hrv))
+                .firstOrNull ??
+            shuffledPatterns
                 .where((p) => p.tags.contains(PatternTag.calming))
                 .firstOrNull,
     };
+
     // Deduplicate: don't show if same as last or most used
     if (candidate == lastPattern || candidate == mostUsedPattern) return null;
     return candidate;

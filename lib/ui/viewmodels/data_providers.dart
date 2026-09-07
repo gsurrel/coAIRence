@@ -33,7 +33,7 @@ final achievementsProvider = FutureProvider<List<AchievementProgress>>((
 });
 
 final mostUsedPatternNameProvider = FutureProvider<String?>((ref) async {
-  return ref.watch(profileServiceProvider).getMostUsedPatternName();
+  return ref.watch(profileServiceProvider).getMostUsedPatternId();
 });
 
 /// Invalidates every provider derived from session/profile data.

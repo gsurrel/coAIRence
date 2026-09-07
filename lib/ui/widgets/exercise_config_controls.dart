@@ -1,26 +1,30 @@
 import 'package:material_ui/material_ui.dart';
 
-/// Controls for customizing an upcoming breathing exercise: how many
-/// repetitions to run and how fast to run them.
+/// Controls for customizing an upcoming breathing exercise: target duration
+/// and playback speed.
 ///
 /// Shown before the exercise starts; hidden once it begins.
 /// Sensory feedback (SFX/haptics) settings are managed in the Settings page.
 class ExerciseConfigControls extends StatelessWidget {
   const ExerciseConfigControls({
-    required this.repetitions,
-    required this.onRepetitionsChanged,
+    required this.targetDurationMinutes,
+    required this.onTargetDurationChanged,
     required this.speedMultiplier,
     required this.onSpeedMultiplierChanged,
+    required this.computedRepetitions,
     super.key,
-    this.minRepetitions = 1,
-    this.maxRepetitions = 15,
+    this.minDurationMinutes = 2,
+    this.maxDurationMinutes = 30,
     this.speedSteps = const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
   });
 
-  final int repetitions;
-  final ValueChanged<int> onRepetitionsChanged;
-  final int minRepetitions;
-  final int maxRepetitions;
+  final int targetDurationMinutes;
+  final ValueChanged<int> onTargetDurationChanged;
+  final int minDurationMinutes;
+  final int maxDurationMinutes;
+
+  /// Pre-computed number of cycles derived from duration, speed, and pattern.
+  final int computedRepetitions;
 
   final double speedMultiplier;
   final ValueChanged<double> onSpeedMultiplierChanged;
@@ -28,20 +32,34 @@ class ExerciseConfigControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       spacing: 4,
       children: [
-        _ConfigRow(
-          label: 'Repetitions',
-          valueLabel: '$repetitions',
-          onDecrement: repetitions > minRepetitions
-              ? () => onRepetitionsChanged(repetitions - 1)
-              : null,
-          onIncrement: repetitions < maxRepetitions
-              ? () => onRepetitionsChanged(repetitions + 1)
-              : null,
+        // Duration slider with computed cycle count label
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Slider(
+              value: targetDurationMinutes.toDouble(),
+              min: minDurationMinutes.toDouble(),
+              max: maxDurationMinutes.toDouble(),
+              divisions: maxDurationMinutes - minDurationMinutes,
+              label: '$targetDurationMinutes min',
+              onChanged: (value) => onTargetDurationChanged(value.round()),
+            ),
+            Text(
+              '$targetDurationMinutes min · ~$computedRepetitions cycles',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
+
+        // Speed selector – unchanged look and feel
         _ConfigRow(
           label: 'Speed',
           valueLabel: '${_formatSpeed(speedMultiplier)}x',

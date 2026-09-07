@@ -1,4 +1,4 @@
-import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Theme-aware presentation for [PatternTag]s (icon + colors), shared by any
@@ -9,7 +9,9 @@ extension PatternTagStyle on PatternTag {
     PatternTag.sleep => Icons.bedtime,
     PatternTag.hrv => Icons.favorite,
     PatternTag.energy => Icons.bolt,
-    PatternTag.focus => Icons.center_focus_strong,
+    PatternTag.focus => Icons.psychology,
+    PatternTag.pranayama => Icons.temple_buddhist,
+    PatternTag.acute => Icons.flare,
   };
 
   /// Background color for a chip representing this tag.
@@ -19,6 +21,8 @@ extension PatternTagStyle on PatternTag {
     PatternTag.hrv => colorScheme.errorContainer,
     PatternTag.energy => colorScheme.secondaryContainer,
     PatternTag.focus => colorScheme.primaryContainer,
+    PatternTag.pranayama => colorScheme.primaryContainer,
+    PatternTag.acute => colorScheme.tertiaryContainer,
   };
 
   /// Foreground (text/icon) color to pair with [color].
@@ -28,5 +32,7 @@ extension PatternTagStyle on PatternTag {
     PatternTag.hrv => colorScheme.onErrorContainer,
     PatternTag.energy => colorScheme.onSecondaryContainer,
     PatternTag.focus => colorScheme.onPrimaryContainer,
+    PatternTag.pranayama => colorScheme.onPrimaryContainer,
+    PatternTag.acute => colorScheme.onTertiaryContainer,
   };
 }

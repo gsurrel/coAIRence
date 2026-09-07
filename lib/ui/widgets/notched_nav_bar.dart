@@ -33,7 +33,7 @@ class NotchedNavBar extends StatefulWidget {
     this.onTap,
   });
 
-  static const double barHeight = 76.0;
+  static const double barHeight = 76;
 
   final List<BottomNavigationBarItem> items;
   final int currentIndex;

@@ -1,6 +1,6 @@
 class ExerciseSession {
   const ExerciseSession({
-    required this.patternName,
+    required this.patternId,
     required this.timestamp,
     required this.durationSeconds,
     required this.cyclesCompleted,
@@ -8,21 +8,21 @@ class ExerciseSession {
   });
 
   factory ExerciseSession.fromMap(Map<String, dynamic> map) => ExerciseSession(
-    patternName: map['patternName'] as String,
+    patternId: map['patternId'] as String,
     timestamp: DateTime.parse(map['timestamp'] as String),
     durationSeconds: map['durationSeconds'] as int,
     cyclesCompleted: map['cyclesCompleted'] as int,
     localHour: map['localHour'] as int,
   );
 
-  final String patternName;
+  final String patternId;
   final DateTime timestamp;
   final int durationSeconds;
   final int cyclesCompleted;
   final int localHour;
 
   Map<String, dynamic> toMap() => {
-    'patternName': patternName,
+    'patternId': patternId,
     'timestamp': timestamp.toUtc().toIso8601String(),
     'durationSeconds': durationSeconds,
     'cyclesCompleted': cyclesCompleted,

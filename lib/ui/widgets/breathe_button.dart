@@ -7,18 +7,12 @@ class BreatheButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          padding: const EdgeInsets.all(30),
-        ),
-        onPressed: onPressed,
-        child: const Padding(
-          padding: EdgeInsets.all(30),
-          child: Text('Breathe', style: TextStyle(fontSize: 34)),
-        ),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
       ),
+      onPressed: onPressed,
+      child: const Text('Breathe', style: TextStyle(fontSize: 34)),
     );
   }
 }

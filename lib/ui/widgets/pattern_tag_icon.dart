@@ -1,4 +1,4 @@
-import 'package:coairence/data/models/breathing_pattern.dart';
+import 'package:coairence/data/models/pattern_tag.dart';
 import 'package:coairence/ui/theme/pattern_tag_style.dart';
 import 'package:material_ui/material_ui.dart';
 
